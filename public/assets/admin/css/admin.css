@@ -1,0 +1,85 @@
+/* Admin — tối giản + alias giữ tương thích view cũ */
+body { min-height: 100vh; }
+
+.admin-sidebar {
+    width: 220px;
+    min-height: 100vh;
+}
+
+.admin-sidebar .nav-link {
+    color: rgba(255,255,255,.75);
+    border-radius: .25rem;
+    padding: .5rem .75rem;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+    color: #fff;
+    background: rgba(255,255,255,.1);
+}
+
+.admin-main { flex: 1; min-width: 0; }
+
+.chart-box { position: relative; height: 280px; }
+
+/* Alias class cũ → kiểu Bootstrap cơ bản */
+.panel {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+}
+.panel__head h2 { margin: 0; font-size: 1.1rem; }
+.table-admin { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.table-admin th, .table-admin td {
+    padding: .55rem .5rem;
+    border-bottom: 1px solid #dee2e6;
+    text-align: left;
+}
+.table-admin th { color: #6c757d; font-size: .8rem; }
+.btn-admin {
+    display: inline-block;
+    padding: .35rem .75rem;
+    font-size: .875rem;
+    border-radius: .25rem;
+    border: 1px solid #0d6efd;
+    background: #0d6efd;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-admin:hover { background: #0b5ed7; color: #fff; }
+.btn-admin-outline {
+    background: #fff;
+    color: #212529;
+    border-color: #ced4da;
+}
+.btn-admin-danger { background: #dc3545; border-color: #dc3545; }
+.btn-sm-admin { padding: .2rem .5rem; font-size: .8rem; }
+.badge-soft, .badge-warn, .badge-danger, .badge-muted {
+    display: inline-block;
+    padding: .25em .5em;
+    font-size: .75rem;
+    border-radius: .25rem;
+}
+.badge-soft { background: #e7f1ff; color: #0d6efd; }
+.badge-warn { background: #fff3cd; color: #664d03; }
+.badge-danger { background: #f8d7da; color: #842029; }
+.badge-muted { background: #e9ecef; color: #495057; }
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+.filters .form-control, .filters .form-select { max-width: 220px; }
+.form-admin .form-group { margin-bottom: 1rem; }
+.form-admin label { display: block; margin-bottom: .25rem; font-size: .875rem; }
+
+@media (max-width: 768px) {
+    .admin-sidebar { width: 100%; min-height: auto; }
+}

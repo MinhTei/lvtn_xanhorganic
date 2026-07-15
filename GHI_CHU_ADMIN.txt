@@ -1,0 +1,21 @@
+================================================================================
+ADMIN + AUTH CHUNG — Xanh Organic
+================================================================================
+
+ĐĂNG NHẬP / ĐĂNG KÝ: chỉ 1 chỗ
+  URL: /login   và   /register
+  (KHÔNG còn /admin/login riêng — sẽ redirect về /login)
+
+SAU KHI LOGIN:
+  admin / staff  →  /admin (Dashboard)
+  customer       →  /home  (+ gộp giỏ & yêu thích session)
+
+TÀI KHOẢN DEMO:
+  admin@gmail.com  / 123456  → vào Admin
+  staff@gmail.com  / 123456  → vào Admin (ít quyền hơn)
+  tai@gmail.com    / 123456  → vào website khách
+
+ĐĂNG KÝ CÔNG KHAI:
+  Chỉ tạo role = customer (admin/staff do Admin tạo trong Quản lý người dùng)
+
+================================================================================

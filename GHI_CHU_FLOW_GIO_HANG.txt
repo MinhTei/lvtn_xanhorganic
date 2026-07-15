@@ -1,0 +1,40 @@
+================================================================================
+GHI CHÚ FLOW: Giỏ hàng & Yêu thích (Xanh Organic)
+================================================================================
+
+1) AI CŨNG ĐƯỢC LÀM (không cần đăng nhập)
+   - Thêm / xem / sửa / xóa GIỎ HÀNG
+   - Thêm / xem / xóa YÊU THÍCH
+
+2) LƯU Ở ĐÂU?
+   - Khách vãng lai (guest):
+       SESSION['cart']     = [ product_id => số_lượng ]
+       SESSION['wishlist'] = [ product_id, ... ]
+   - Đã đăng nhập:
+       Bảng carts / wishlists trong database
+
+3) KHI NÀO BẮT LOGIN?
+   - Chỉ khi vào CHECKOUT (nút "THANH TOÁN")
+   - Middleware auth.custom dùng redirect()->guest()
+   - Sau login: redirect()->intended() quay lại /checkout
+
+4) KHI LOGIN XẢY RA GÌ?
+   - ClientCart::mergeSessionToUser()     → gộp giỏ session vào DB
+   - ClientWishlist::mergeSessionToUser() → gộp yêu thích session vào DB
+   - Xóa SESSION sau khi gộp xong
+
+5) FILE QUAN TRỌNG (đọc theo thứ tự này)
+   - app/Services/ClientCart.php
+   - app/Services/ClientWishlist.php
+   - app/Http/Controllers/Clients/CartController.php
+   - app/Http/Controllers/Clients/WishlistController.php
+   - app/Http/Controllers/Clients/AuthController.php   (merge + intended)
+   - app/Http/Controllers/Clients/CheckoutController.php
+   - routes/web.php
+   - public/assets/clients/js/product-actions.js
+
+6) DEMO NHANH
+   Guest: thêm SP vào giỏ → mở /cart → bấm THANH TOÁN
+        → login → tự về checkout → đặt hàng COD
+
+================================================================================
