@@ -1,0 +1,489 @@
+@startuml Fig_3_13
+title Hình 3.13 — Đăng nhập người dùng
+actor "Người dùng" as A
+boundary "Trang Chủ" as H
+boundary "Trang Đăng Nhập" as B
+control "AuthController" as C
+entity "User" as E
+
+A -> H : 1. Truy cập trang chủ
+H -> B : 1.1. Truy cập trang đăng nhập
+B -> C : 1.1.1. showLoginForm()
+C --> B : 1.1.1.1. return loginForm
+
+A -> B : 2. Nhập email và mật khẩu
+B -> C : 2.1. login()
+C -> C : 2.1.1. validate()
+C -> E : 2.1.1.1. loginUser()
+E --> C : 2.1.1.2. return user
+
+alt Thành công
+  C -> C : 2.1.2. Tạo session
+  alt Admin / Staff
+    C --> A : 2.1.3. Chuyển /admin
+  else Customer
+    C -> C : 2.1.3. Gộp giỏ hàng / yêu thích
+    C --> H : 2.1.4. Thông báo đăng nhập thành công
+  end
+else Không thành công
+  C --> B : 2.1.2. Thông báo sai TK / MK hoặc chưa kích hoạt
+end
+@enduml
+
+@startuml Fig_3_14
+title Hình 3.14 — Đăng ký tài khoản
+actor "Người dùng" as A
+boundary "Trang Chủ" as H
+boundary "Trang Đăng Ký" as B
+control "AuthController" as C
+entity "User" as E
+
+A -> H : 1. Truy cập trang chủ
+H -> B : 1.1. Mở trang đăng ký
+B -> C : 1.1.1. showRegisterForm()
+C --> B : 1.1.1.1. return registerForm
+
+A -> B : 2. Điền thông tin và Đăng ký
+B -> C : 2.1. register()
+C -> C : 2.1.1. validate()
+C -> E : 2.1.1.1. checkEmailExist()
+E --> C : 2.1.1.2. return result
+
+alt Thành công
+  C -> E : 2.1.2. createUser()
+  E --> C : 2.1.2.1. return user
+  C --> B : 2.1.3. Thông báo kiểm tra email
+  A -> C : 3. activate(token)
+  C -> E : 3.1. activateUser()
+  C --> A : 3.2. Chuyển trang đăng nhập
+else Email trùng / lỗi
+  C --> B : 2.1.2. Thông báo lỗi
+end
+@enduml
+
+@startuml Fig_3_15
+title Hình 3.15 — Quên mật khẩu
+actor "Người dùng" as A
+boundary "Trang Đăng Nhập" as L
+boundary "Trang Quên MK" as F
+boundary "Trang Đặt lại MK" as R
+control "ForgotPasswordController" as CF
+control "ResetPasswordController" as CR
+entity "User" as E
+
+A -> L : 1. Quên mật khẩu
+L -> CF : 1.1. showForgotPasswordForm()
+CF --> F : 1.1.1. return forgotPasswordForm
+
+A -> F : 2. Nhập email và Gửi
+F -> CF : 2.1. sendResetLinkEmail()
+CF -> E : 2.1.1. findByEmail()
+E --> CF : 2.1.1.1. return user
+CF --> A : 2.1.2. Gửi email đặt lại MK
+
+A -> R : 3. Mở link trong email
+R -> CR : 3.1. showResetPasswordForm()
+CR --> R : 3.1.1. return resetPasswordForm
+
+A -> R : 4. Nhập MK mới và Lưu
+R -> CR : 4.1. resetPassword()
+CR -> CR : 4.1.1. validate()
+CR -> E : 4.1.1.1. updatePassword()
+CR --> L : 4.1.2. Thông báo thành công
+@enduml
+
+@startuml Fig_3_16
+title Hình 3.16 — Cập nhật thông tin cá nhân
+actor "Khách hàng" as A
+boundary "Trang Quản Lý Tài Khoản" as B
+control "AccountController" as C
+entity "User" as E
+
+A -> B : 1. Xem hồ sơ
+B -> C : 1.1. index()
+C -> E : 1.1.1. getCurrentUser()
+E --> C : 1.1.1.1. return user
+C --> B : 1.1.2. Hiển thị thông tin
+
+A -> B : 2. Sửa và Lưu
+B -> C : 2.1. update()
+C -> C : 2.1.1. validate()
+alt Thành công
+  C -> E : 2.1.2. save()
+  C --> B : 2.1.3. Thông báo thành công
+else Lỗi
+  C --> B : 2.1.2. Thông báo lỗi
+end
+@enduml
+
+@startuml Fig_3_17
+title Hình 3.17 — Lịch sử đơn hàng
+actor "Khách hàng" as A
+boundary "Trang Quản Lý Tài Khoản" as B
+control "AccountController" as C
+entity "Order" as E
+
+A -> B : 1. Chọn Lịch sử đơn hàng
+B -> C : 1.1. index()
+C -> E : 1.1.1. getOrdersByUser()
+E --> C : 1.1.1.1. return orders
+C --> B : 1.1.2. Hiển thị danh sách đơn
+@enduml
+
+@startuml Fig_3_18
+title Hình 3.18 — Chi tiết đơn hàng
+actor "Khách hàng" as A
+boundary "Trang Lịch sử đơn" as L
+boundary "Trang Chi tiết đơn" as B
+control "AccountController" as C
+entity "Order" as E
+
+A -> L : 1. Chọn một đơn
+L -> C : 1.1. showOrderDetail()
+C -> E : 1.1.1. getOrderDetail()
+E --> C : 1.1.1.1. return order
+C --> B : 1.1.2. Hiển thị trạng thái + chi tiết
+@enduml
+
+@startuml Fig_3_19
+title Hình 3.19 — Sản phẩm yêu thích
+actor "Khách hàng" as A
+boundary "Trang Quản Lý Tài Khoản" as B
+control "AccountController" as C
+entity "Wishlist" as E
+
+A -> B : 1. Chọn Sản phẩm yêu thích
+B -> C : 1.1. index()
+C -> E : 1.1.1. getWishlist()
+E --> C : 1.1.1.1. return items
+C --> B : 1.1.2. Hiển thị danh sách
+@enduml
+
+@startuml Fig_3_20
+title Hình 3.20 — Danh sách tài khoản
+actor "Admin" as A
+boundary "Trang QL người dùng" as B
+control "AdminUserController" as C
+entity "User" as E
+
+A -> B : 1. Truy cập quản lý người dùng
+B -> C : 1.1. index()
+alt Có quyền manage_users
+  C -> E : 1.1.1. getUsers()
+  E --> C : 1.1.1.1. return users
+  C --> B : 1.1.2. Hiển thị danh sách
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_21
+title Hình 3.21 — Tìm kiếm tài khoản
+actor "Admin" as A
+boundary "Trang QL người dùng" as B
+control "AdminUserController" as C
+entity "User" as E
+
+A -> B : 1. Nhập từ khóa tìm kiếm
+B -> C : 1.1. index(q)
+alt Có quyền manage_users
+  C -> E : 1.1.1. searchUsers()
+  E --> C : 1.1.1.1. return users
+  alt Có kết quả
+    C --> B : 1.1.2. Hiển thị kết quả
+  else Không có
+    C --> B : 1.1.2. Không có người dùng
+  end
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_22
+title Hình 3.22 — Chi tiết tài khoản
+actor "Admin" as A
+boundary "Trang QL người dùng" as L
+boundary "Trang Chi tiết tài khoản" as B
+control "AdminUserController" as C
+entity "User" as E
+
+A -> L : 1. Nhấn Chi tiết
+L -> C : 1.1. show()
+alt Có quyền manage_users
+  C -> E : 1.1.1. getUserDetail()
+  E --> C : 1.1.1.1. return user
+  C --> B : 1.1.2. Hiển thị chi tiết
+else Không có quyền
+  C --> L : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_23
+title Hình 3.23 — Khóa / mở khóa tài khoản
+actor "Admin" as A
+boundary "Trang QL người dùng" as B
+control "AdminUserController" as C
+entity "User" as E
+
+A -> B : 1. Nhấn Khóa hoặc Mở khóa
+B -> C : 1.1. toggleBlock()
+alt Có quyền manage_users
+  C -> C : 1.1.1. Kiểm tra điều kiện
+  alt Đang active
+    C -> E : 1.1.1.1. update(status=blocked)
+    E --> C : 1.1.1.2. return
+    C --> B : 1.1.2. Thông báo đã khóa
+  else Đang blocked
+    C -> E : 1.1.1.1. update(status=active)
+    E --> C : 1.1.1.2. return
+    C --> B : 1.1.2. Thông báo đã mở khóa
+  else Không hợp lệ
+    C --> B : 1.1.1.1. Thông báo lỗi\\n(tự khóa / chưa kích hoạt / khóa admin)
+  end
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_23b
+title Hình 3.23b — Gán role tài khoản
+actor "Admin" as A
+boundary "Trang QL người dùng" as L
+boundary "Trang Gán role" as B
+control "AdminUserController" as C
+entity "User" as E
+
+A -> L : 1. Nhấn Gán role
+L -> C : 1.1. edit()
+C --> B : 1.1.1. return editForm
+
+A -> B : 2. Chọn role và Lưu
+B -> C : 2.1. update()
+alt Có quyền manage_users
+  C -> C : 2.1.1. validate(role_id)
+  C -> E : 2.1.1.1. update(role_id)
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_24
+title Hình 3.24 — Thêm Role
+actor "Admin" as A
+boundary "Trang Role & Quyền" as L
+boundary "Trang Thêm role" as B
+control "AdminRoleController" as C
+entity "Role" as E
+
+A -> L : 1. Nhấn Thêm role
+L -> C : 1.1. create()
+C --> B : 1.1.1. return createForm
+
+A -> B : 2. Nhập thông tin và Lưu
+B -> C : 2.1. store()
+alt Có quyền manage_users
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. create() + syncPermissions()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_25
+title Hình 3.25 — Gán quyền Role
+actor "Admin" as A
+boundary "Trang Role & Quyền" as L
+boundary "Trang Gán quyền" as B
+control "AdminRoleController" as C
+entity "Role" as E
+
+A -> L : 1. Nhấn Gán quyền
+L -> C : 1.1. edit()
+C --> B : 1.1.1. return editForm
+
+A -> B : 2. Cập nhật và Lưu quyền
+B -> C : 2.1. update()
+alt Có quyền manage_users
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. syncPermissions()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_26
+title Hình 3.26 — Thêm sản phẩm
+actor "Admin" as A
+boundary "Trang Quản lý sản phẩm" as L
+boundary "Trang Thêm sản phẩm" as B
+control "AdminProductController" as C
+entity "Product" as E
+
+A -> L : 1. Nhấn Thêm sản phẩm
+L -> C : 1.1. create()
+C --> B : 1.1.1. return createForm
+
+A -> B : 2. Nhập thông tin và Lưu
+B -> C : 2.1. store()
+alt Có quyền manage_products
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. create() + saveImages()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_27
+title Hình 3.27 — Sửa sản phẩm
+actor "Admin" as A
+boundary "Trang Quản lý sản phẩm" as L
+boundary "Trang Sửa sản phẩm" as B
+control "AdminProductController" as C
+entity "Product" as E
+
+A -> L : 1. Nhấn Sửa
+L -> C : 1.1. edit()
+C --> B : 1.1.1. return editForm
+
+A -> B : 2. Cập nhật và Lưu
+B -> C : 2.1. update()
+alt Có quyền manage_products
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. update() + deleteImages() + saveImages()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_28
+title Hình 3.28 — Xóa sản phẩm
+actor "Admin" as A
+boundary "Trang Quản lý sản phẩm" as B
+control "AdminProductController" as C
+entity "Product" as E
+entity "OrderItem" as OI
+
+A -> B : 1. Nhấn Xóa
+B -> C : 1.1. destroy()
+alt Có quyền manage_products
+  C -> E : 1.1.1. checkHasOrders()
+  E -> OI : 1.1.1.1. exists()
+  OI --> E : 1.1.1.2. return hasOrders
+  E --> C : 1.1.1.3. return hasOrders
+  alt Đã có đơn
+    C -> E : 1.1.2. update(is_active=false)
+    C --> B : 1.1.3. Thông báo đã ẩn sản phẩm
+  else Chưa có đơn
+    C -> E : 1.1.2. deleteImages() + delete()
+    C --> B : 1.1.3. Thông báo đã xóa
+  end
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_29
+title Hình 3.29 — Import sản phẩm
+actor "Admin" as A
+boundary "Trang Quản lý sản phẩm" as L
+boundary "Trang Import sản phẩm" as B
+control "AdminProductController" as C
+entity "Product" as E
+
+A -> L : 1. Nhấn Import CSV
+L -> C : 1.1. importForm()
+C --> B : 1.1.1. return importForm
+
+A -> B : 2. Chọn file CSV và Import
+B -> C : 2.1. importStore()
+alt Có quyền manage_products
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. importProducts()
+  C --> L : 2.1.2. Thông báo kết quả import
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_30
+title Hình 3.30 — Thêm danh mục
+actor "Admin" as A
+boundary "Trang Quản lý danh mục" as L
+boundary "Trang Thêm danh mục" as B
+control "AdminCategoryController" as C
+entity "Category" as E
+
+A -> L : 1. Nhấn Thêm
+L -> C : 1.1. create()
+C --> B : 1.1.1. return createForm
+
+A -> B : 2. Nhập thông tin và Lưu
+B -> C : 2.1. store()
+alt Có quyền manage_categories
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. create()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_31
+title Hình 3.31 — Sửa danh mục
+actor "Admin" as A
+boundary "Trang Quản lý danh mục" as L
+boundary "Trang Sửa danh mục" as B
+control "AdminCategoryController" as C
+entity "Category" as E
+
+A -> L : 1. Nhấn Sửa
+L -> C : 1.1. edit()
+C --> B : 1.1.1. return editForm
+
+A -> B : 2. Cập nhật và Lưu
+B -> C : 2.1. update()
+alt Có quyền manage_categories
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. update()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_32
+title Hình 3.32 — Xóa danh mục
+actor "Admin" as A
+boundary "Trang Quản lý danh mục" as B
+control "AdminCategoryController" as C
+entity "Category" as E
+entity "Product" as P
+
+A -> B : 1. Nhấn Xóa
+B -> C : 1.1. destroy()
+alt Có quyền manage_categories
+  C -> E : 1.1.1. checkHasProducts()
+  E -> P : 1.1.1.1. exists()
+  P --> E : 1.1.1.2. return hasProducts
+  E --> C : 1.1.1.3. return hasProducts
+  alt Còn sản phẩm
+    C --> B : 1.1.2. Không xóa được
+  else Không có sản phẩm
+    C -> E : 1.1.2. checkHasChildren()
+    E --> C : 1.1.2.1. return hasChildren
+    alt Còn danh mục con
+      C --> B : 1.1.3. Không xóa được
+    else Không có danh mục con
+      C -> E : 1.1.3. delete()
+      C --> B : 1.1.4. Thông báo đã xóa
+    end
+  end
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml

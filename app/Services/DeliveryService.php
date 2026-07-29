@@ -5,27 +5,13 @@ namespace App\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * Quy trình giao hàng:
- *
- * Hàng tươi sống (delivery_mode = both):
- *   - Bắt buộc chọn khung giờ nhận (Sáng/Trưa/Chiều/Tối)
- *   - Cutoff 20h: sau 20h ẩn khung "hôm nay", chỉ còn ngày mai
- *   - Tuỳ chọn thêm: giao nhanh trong 2 giờ (phụ phí)
- *
- * Hàng khô (delivery_mode = standard):
- *   - Giao 3–5 ngày, không cần khung giờ
- *
- * Chỉ giao nhanh (delivery_mode = express):
- *   - Chỉ còn lựa chọn giao trong 2 giờ
- */
+
 class DeliveryService
 {
     public const STANDARD_FEE = 25000;
     public const EXPRESS_FEE = 45000;
     public const FREE_SHIP_THRESHOLD = 500000;
 
-    /** Giờ chốt đơn: sau mốc này không còn nhận giao "hôm nay". */
     public const CUTOFF_HOUR = 20;
 
     /**
@@ -102,7 +88,7 @@ class DeliveryService
         } elseif ($hasFresh && $hasDry) {
             $message = 'Đơn có hàng tươi sống nên giao theo khung giờ nhận hàng (hàng khô sẽ giao cùng chuyến).';
         } elseif ($hasFresh) {
-            $message = 'Chọn ngày nhận (hôm nay / ngày mai) và khung giờ. Sau 20h chỉ còn giao ngày mai.';
+            $message = null;
         } elseif ($hasDry) {
             $message = 'Hàng khô / lưu kho: giao trong 3–5 ngày làm việc.';
         } elseif (count($expressOnly)) {

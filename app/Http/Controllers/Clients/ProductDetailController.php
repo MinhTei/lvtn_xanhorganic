@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Clients;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductReview;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductDetailController extends Controller
 {
@@ -33,5 +36,39 @@ class ProductDetailController extends Controller
             'reviewCount', 'averageRating', 'reviews',
             'relatedProducts'
         ));
+    }
+
+    public function updateReview(Request $request, Product $product, ProductReview $review)
+    {
+        abort_unless(Auth::check() && $review->user_id === Auth::id(), 403);
+        abort_unless($review->product_id === $product->id, 404);
+
+        $data = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $review->update([
+            'rating' => $data['rating'],
+            'comment' => $data['comment'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('product.detail', $product->slug)
+            ->withFragment('tabs-2')
+            ->with('reviewSuccess', 'Đã cập nhật đánh giá.');
+    }
+
+    public function destroyReview(Product $product, ProductReview $review)
+    {
+        abort_unless(Auth::check() && $review->user_id === Auth::id(), 403);
+        abort_unless($review->product_id === $product->id, 404);
+
+        $review->delete();
+
+        return redirect()
+            ->route('product.detail', $product->slug)
+            ->withFragment('tabs-2')
+            ->with('reviewSuccess', 'Đã xóa đánh giá.');
     }
 }

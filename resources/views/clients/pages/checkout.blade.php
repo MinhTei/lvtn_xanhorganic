@@ -2,8 +2,8 @@
 
 @section('title', 'Thanh toán')
 @section('breadcrumb', 'Thanh toán')
-@section('content')
 
+@section('content')
 <section class="checkout spad">
     <div class="container">
         @if($errors->any())
@@ -16,28 +16,32 @@
             </div>
         @endif
 
+        @php
+            $defaultType = old('address_type', $addresses->count() > 0 ? 'saved' : 'new');
+            $defaultDay = old('delivery_day', $defaultDeliveryDay);
+        @endphp
+
         <div class="checkout__form">
-            <h4>Thông tin giao hàng</h4>
             <form action="{{ route('checkout.post') }}" method="POST" id="checkout-form">
                 @csrf
-                <div class="row">
+                <div class="row align-items-start">
                     <div class="col-lg-7 col-md-6">
-                        <div class="address-type-selection">
-                            <label class="address-type-label">
+                        <h4>Thông tin giao hàng</h4>
+                        <div class="addr-type">
+                            <label>
                                 <input type="radio" name="address_type" value="saved"
-                                    {{ old('address_type', $addresses->count() > 0 ? 'saved' : 'new') === 'saved' ? 'checked' : '' }}
+                                    {{ $defaultType === 'saved' ? 'checked' : '' }}
                                     {{ $addresses->count() == 0 ? 'disabled' : '' }}>
-                                <span>Địa chỉ đã lưu</span>
+                                Địa chỉ đã lưu
                             </label>
-                            <label class="address-type-label">
+                            <label>
                                 <input type="radio" name="address_type" value="new"
-                                    {{ old('address_type', $addresses->count() == 0 ? 'new' : 'saved') === 'new' ? 'checked' : '' }}>
-                                <span>Địa chỉ mới</span>
+                                    {{ $defaultType === 'new' ? 'checked' : '' }}>
+                                Địa chỉ mới
                             </label>
                         </div>
 
-                        <div id="saved-address-select" class="checkout__input"
-                             style="{{ old('address_type', $addresses->count() > 0 ? 'saved' : 'new') === 'new' ? 'display:none;' : '' }}">
+                        <div id="saved-address-select" class="checkout__input {{ $defaultType === 'new' ? 'is-hidden' : '' }}">
                             <p>Chọn địa chỉ <span>*</span></p>
                             <select name="saved_address_id" class="form-control">
                                 @if($addresses->count() == 0)
@@ -53,8 +57,7 @@
                             </select>
                         </div>
 
-                        <div id="new-address-form"
-                             style="{{ old('address_type', $addresses->count() == 0 ? 'new' : 'saved') === 'new' ? '' : 'display:none;' }}">
+                        <div id="new-address-form" class="{{ $defaultType === 'new' ? '' : 'is-hidden' }}">
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
@@ -108,11 +111,10 @@
                             </div>
                         </div>
 
-                        {{-- Ngày giao + khung giờ --}}
                         <div class="checkout__shipping mt-4">
                             <h4>Thời gian nhận hàng <span class="text-danger">*</span></h4>
                             @if(!empty($deliveryOptions['message']))
-                                <p class="text-muted" style="font-size:13px;">{{ $deliveryOptions['message'] }}</p>
+                                <p class="hint">{{ $deliveryOptions['message'] }}</p>
                             @endif
 
                             @if($deliveryOptions['conflict'])
@@ -122,29 +124,25 @@
                             @elseif($deliveryOptions['requires_slot'])
                                 <input type="hidden" name="shipping_type" value="standard">
 
-                                <div class="checkout__payment__method mt-2">
-                                    <label class="payment-method-label {{ old('delivery_day', $defaultDeliveryDay) === 'today' ? 'active' : '' }} {{ !$slotGroups['today']['available'] ? 'is-disabled' : '' }}">
+                                <div class="radio-list mt-2">
+                                    <label class="pay-option {{ !$slotGroups['today']['available'] ? 'is-disabled' : '' }}">
                                         <input type="radio" name="delivery_day" value="today"
                                             {{ !$slotGroups['today']['available'] ? 'disabled' : '' }}
-                                            {{ old('delivery_day', $defaultDeliveryDay) === 'today' && $slotGroups['today']['available'] ? 'checked' : '' }}>
-                                        <div class="payment-method-text">
-                                            <h6>Giao hôm nay</h6>
-                                            <p>
-                                                @if($slotGroups['today']['available'])
-                                                    {{ \Carbon\Carbon::parse($slotGroups['today']['date'])->format('d/m/Y') }}
-                                                @else
-                                                    Hết khung / sau {{ $cutoffHour }}h
-                                                @endif
-                                            </p>
-                                        </div>
+                                            {{ $defaultDay === 'today' && $slotGroups['today']['available'] ? 'checked' : '' }}>
+                                        Giao hôm nay
+                                        <span class="hint">
+                                            @if($slotGroups['today']['available'])
+                                                ({{ \Carbon\Carbon::parse($slotGroups['today']['date'])->format('d/m/Y') }})
+                                            @else
+                                                (Hết khung / sau {{ $cutoffHour }}h)
+                                            @endif
+                                        </span>
                                     </label>
-                                    <label class="payment-method-label {{ old('delivery_day', $defaultDeliveryDay) === 'tomorrow' || !$slotGroups['today']['available'] ? 'active' : '' }}">
+                                    <label class="pay-option">
                                         <input type="radio" name="delivery_day" value="tomorrow"
-                                            {{ old('delivery_day', $defaultDeliveryDay) === 'tomorrow' || !$slotGroups['today']['available'] ? 'checked' : '' }}>
-                                        <div class="payment-method-text">
-                                            <h6>Giao ngày mai</h6>
-                                            <p>{{ \Carbon\Carbon::parse($slotGroups['tomorrow']['date'])->format('d/m/Y') }}</p>
-                                        </div>
+                                            {{ $defaultDay === 'tomorrow' || !$slotGroups['today']['available'] ? 'checked' : '' }}>
+                                        Giao ngày mai
+                                        <span class="hint">({{ \Carbon\Carbon::parse($slotGroups['tomorrow']['date'])->format('d/m/Y') }})</span>
                                     </label>
                                 </div>
 
@@ -155,9 +153,6 @@
                                             data-old="{{ old('delivery_slot') }}">
                                         <option value="">-- Chọn khung giờ --</option>
                                     </select>
-                                    <small class="text-muted d-block mt-2">
-                                        Giờ chốt đơn {{ $cutoffHour }}h: sau mốc này chỉ còn giao ngày mai.
-                                    </small>
                                 </div>
                             @elseif($deliveryOptions['allow_standard'])
                                 <input type="hidden" name="shipping_type" value="standard">
@@ -170,26 +165,17 @@
 
                         <div class="checkout__payment mt-4">
                             <h4>Phương thức thanh toán</h4>
-                            <div class="checkout__payment__method mt-3">
-                                <label class="payment-method-label {{ old('payment_method', 'cod') === 'cod' ? 'active' : '' }}">
+                            <div class="radio-list mt-2">
+                                <label class="pay-option">
                                     <input type="radio" name="payment_method" value="cod"
                                         {{ old('payment_method', 'cod') === 'cod' ? 'checked' : '' }}>
-                                    <div class="payment-method-text">
-                                        <h6>Thanh toán khi nhận hàng (COD)</h6>
-                                        <p>Thanh toán bằng tiền mặt khi nhận hàng</p>
-                                    </div>
+                                    Thanh toán khi nhận hàng (COD)
                                 </label>
-                                <label class="payment-method-label {{ old('payment_method') === 'vnpay' ? 'active' : '' }}">
+                                <label class="pay-option">
                                     <input type="radio" name="payment_method" value="vnpay"
                                         {{ old('payment_method') === 'vnpay' ? 'checked' : '' }}>
-                                    <div class="payment-method-text">
-                                        <h6>VNPay</h6>
-                                        <p>Thanh toán online qua cổng VNPay (ATM / QR / thẻ)</p>
-                                        <small class="text-muted">
-                                            Sandbox: chọn ngân hàng <b>NCB</b> —
-                                            thẻ <code>9704198526191432198</code>, tên NGUYEN VAN A, phát hành 07/15, OTP 123456
-                                        </small>
-                                    </div>
+                                    VNPay
+                                  
                                 </label>
                             </div>
                         </div>
@@ -208,33 +194,53 @@
                             <div class="checkout__order__products">Sản phẩm <span>Tổng</span></div>
                             <ul>
                                 @foreach($cartItems as $item)
-                                @php
-                                    $price = $item->product->sale_price && $item->product->sale_price < $item->product->price
-                                        ? $item->product->sale_price
-                                        : $item->product->price;
-                                    $mode = $item->product->delivery_mode ?? 'both';
-                                @endphp
-                                <li>
-                                    {{ $item->product->name }} (x{{ $item->quantity }})
-                                    <small class="d-block text-muted">
-                                        @if($mode === 'express') Chỉ giao nhanh 2 giờ
-                                        @elseif($mode === 'standard') Hàng khô · 3–5 ngày
-                                        @else Hàng tươi · theo khung giờ
-                                        @endif
-                                    </small>
-                                    <span>{{ number_format($price * $item->quantity, 0, ',', '.') }}₫</span>
-                                </li>
+                                    @php
+                                        $price = $item->product->sale_price && $item->product->sale_price < $item->product->price
+                                            ? $item->product->sale_price
+                                            : $item->product->price;
+                                        $mode = $item->product->delivery_mode ?? 'both';
+                                    @endphp
+                                    <li>
+                                        <div>
+                                            {{ $item->product->name }} (x{{ $item->quantity }})
+                                            <small class="d-block text-muted">
+                                                @if($mode === 'express') Chỉ giao nhanh 2 giờ
+                                                @elseif($mode === 'standard') Hàng khô · 3–5 ngày
+                                                @else Hàng tươi · theo khung giờ
+                                                @endif
+                                            </small>
+                                        </div>
+                                        <span>{{ number_format($price * $item->quantity, 0, ',', '.') }}₫</span>
+                                    </li>
                                 @endforeach
                             </ul>
 
-                            <div class="checkout__coupon mt-3 mb-3">
+                            <div class="checkout__coupon mt-3 mb-3" style="border-bottom: none; padding-bottom: 0;">
                                 <p>Mã giảm giá</p>
-                                <div class="d-flex" style="gap:8px;">
+                                <div class="coupon-row">
                                     <input type="text" name="coupon_code" id="coupon_code"
-                                           value="{{ old('coupon_code') }}" placeholder="Nhập mã" style="flex:1;">
-                                    <button type="button" id="btn-apply-coupon" class="site-btn rounded-btn" style="padding:10px 16px;">ÁP DỤNG</button>
+                                           value="{{ old('coupon_code') }}" placeholder="Nhập mã">
+                                    <button type="button" id="btn-apply-coupon" class="site-btn">ÁP DỤNG</button>
                                 </div>
                                 <small id="coupon-message" class="d-block mt-2"></small>
+                                @if($activeCoupons->count() > 0)
+                                    <div class="mt-2 text-muted">
+                                        <small>Mã gợi ý:</small>
+                                        <ul style="list-style: none; padding-left: 0; margin-top: 5px; font-size: 0.85rem;">
+                                            @foreach($activeCoupons as $coupon)
+                                                <li>
+                                                    <strong>{{ $coupon->code }}</strong>: 
+                                                    @if($coupon->discount_type === 'percentage')
+                                                        Giảm {{ $coupon->discount_value }}%
+                                                    @else
+                                                        Giảm {{ number_format($coupon->discount_value, 0, ',', '.') }}₫
+                                                    @endif
+                                                    (Đơn từ {{ number_format($coupon->min_order_value, 0, ',', '.') }}₫)
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                                 <input type="hidden" id="coupon_discount" value="0">
                             </div>
 
@@ -245,7 +251,7 @@
                             </span></div>
                             <div class="checkout__order__total">Tổng cộng <span id="txt-total">{{ number_format($subtotal + $shippingFee, 0, ',', '.') }}₫</span></div>
 
-                            <button type="submit" class="site-btn rounded-btn" {{ $deliveryOptions['conflict'] ? 'disabled' : '' }}>
+                            <button type="submit" class="site-btn" {{ $deliveryOptions['conflict'] ? 'disabled' : '' }}>
                                 ĐẶT HÀNG
                             </button>
                         </div>
@@ -255,5 +261,4 @@
         </div>
     </div>
 </section>
-
 @endsection

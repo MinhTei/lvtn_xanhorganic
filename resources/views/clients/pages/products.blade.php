@@ -9,7 +9,7 @@
             <div class="row">
 
                 {{-- Sidebar lọc --}}
-                <div class="col-lg-3 col-md-5">
+                <div class="col-12 col-lg-3">
                     <div class="sidebar">
                         <button type="button" class="btn-mobile-filter mb-3"
                             onclick="$('.sidebar__filter').toggleClass('active')">
@@ -68,7 +68,7 @@
                 </div>
 
                 {{-- Danh sách sản phẩm --}}
-                <div class="col-lg-9 col-md-7" id="product-list-area">
+                <div class="col-12 col-lg-9" id="product-list-area">
 
                     {{-- Header: tiêu đề + sắp xếp --}}
                     <div class="product__header">

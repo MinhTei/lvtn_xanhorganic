@@ -2,8 +2,11 @@
 @section('title', 'Đơn hàng ' . $order->order_code)
 
 @section('content')
-<div class="mb-2">
+<div class="mb-2 d-flex gap-2 flex-wrap">
     <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-outline-secondary">&larr; Quay lại</a>
+    <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+        In hóa đơn
+    </a>
 </div>
 
 <div class="row g-3">
@@ -142,11 +145,11 @@
             <div class="card-body small">
                 <ol class="mb-2 ps-3">
                     <li>Chờ xác nhận</li>
-                    <li>Đang xử lý</li>
+                    <li>Đã xác nhận <span class="text-muted">(kiểm tra tồn kho)</span></li>
                     <li>Đang giao</li>
                     <li>Đã giao</li>
                 </ol>
-                <div class="text-muted">Hủy chỉ khi đang <em>Chờ xác nhận</em> hoặc <em>Đang xử lý</em>. Không nhảy bước / không quay ngược.</div>
+                <div class="text-muted">Hủy chỉ khi đang <em>Chờ xác nhận</em> hoặc <em>Đã xác nhận</em>. Không nhảy bước / không quay ngược.</div>
             </div>
         </div>
 

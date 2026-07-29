@@ -11,15 +11,21 @@
                 <div class="col-lg-5 col-md-6">
                     <div class="product__details__pic">
                         <div class="product__details__pic__item">
-                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" id="mainProductImage">
+                            <img src="{{ $product->image_url }}"
+                                 alt="{{ $product->name }}"
+                                 id="mainProductImage"
+                                 class="product-main-image">
                         </div>
 
                         @if ($product->images->count() > 1)
-                            <div class="product__details__pic__slider__placeholder mt-2">
-                                @foreach ($product->images as $image)
-                                    <div class="pt product-thumb" data-image="{{ $image->image_url }}">
-                                        <img src="{{ $image->image_url }}" alt="{{ $product->name }}">
-                                    </div>
+                            <div class="product__details__pic__slider__placeholder">
+                                @foreach ($product->images as $index => $image)
+                                    <button type="button"
+                                            class="pt product-thumb {{ $index === 0 ? 'active' : '' }}"
+                                            data-image="{{ $image->display_url }}"
+                                            aria-label="Xem ảnh {{ $index + 1 }}">
+                                        <img src="{{ $image->display_url }}" alt="{{ $product->name }} — ảnh {{ $index + 1 }}">
+                                    </button>
                                 @endforeach
                             </div>
                         @endif
@@ -44,8 +50,6 @@
                                 <span class="original-price">{{ number_format($product->price, 0, ',', '.') }}₫</span>
                             @endif
                         </div>
-
-                        </p>
 
                         <div class="product__details__quantity">
                             <div class="quantity">
@@ -72,11 +76,23 @@
 
                 {{-- Tab mô tả & đánh giá --}}
                 <div class="col-lg-12">
+                    @if(session('reviewSuccess'))
+                        <div class="alert alert-success">{{ session('reviewSuccess') }}</div>
+                    @endif
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <div class="product__details__tab">
                         <ul class="nav nav-tabs" role="tablist">
                             <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabs-1" role="tab">Mô
                                     tả chi tiết</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabs-2" role="tab">Đánh giá
+                            <li class="nav-item"><a class="nav-link" id="reviews-tab-link" data-toggle="tab" href="#tabs-2" role="tab">Đánh giá
                                     ({{ $reviewCount }})</a></li>
                         </ul>
                         <div class="tab-content">
@@ -109,6 +125,27 @@
                                                 class="fa fa-star{{ $i <= $review->rating ? '' : '-o' }}"></i>@endfor
                                             </div>
                                             <p class="review-comment">{{ $review->comment }}</p>
+                                            @auth
+                                                @if($review->user_id === auth()->id())
+                                                    <div class="review-btns">
+                                                        <button type="button" class="btn-sm-review btn-edit-review"
+                                                            data-toggle="modal" data-target="#editReviewModal"
+                                                            data-rating="{{ $review->rating }}"
+                                                            data-comment="{{ $review->comment }}"
+                                                            data-action="{{ route('product.review.update', ['product' => $product->id, 'review' => $review->id]) }}">
+                                                            Sửa đánh giá
+                                                        </button>
+                                                        <form method="POST"
+                                                              action="{{ route('product.review.destroy', ['product' => $product->id, 'review' => $review->id]) }}"
+                                                              onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');"
+                                                              class="m-0">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn-sm-danger">Xóa</button>
+                                                        </form>
+                                                    </div>
+                                                @endif
+                                            @endauth
                                         </div>
                                     @empty
                                         <div class="review-empty text-center">
@@ -126,6 +163,41 @@
         </div>
     </section>
 
+    @auth
+    <div class="modal fade" id="editReviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form method="POST" action="" id="editReviewForm">
+                @csrf
+                @method('PUT')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Sửa đánh giá: {{ $product->name }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="review-stars-pick">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <i class="fa fa-star star-rate" data-val="{{ $i }}"></i>
+                            @endfor
+                        </div>
+                        <input type="hidden" name="rating" id="editReviewRating" value="0" required>
+                        <div class="form-group text-left">
+                            <label for="editComment">Nhận xét (Tùy chọn)</label>
+                            <textarea name="comment" id="editComment" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-success" id="btnUpdateReview" disabled>Lưu đánh giá</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endauth
+
     {{-- Sản phẩm liên quan --}}
     @if ($relatedProducts->count() > 0)
     <section class="related-product">
@@ -141,5 +213,46 @@
         </div>
     </section>
     @endif
+
+@push('scripts')
+<script>
+    function paintEditStars(val) {
+        $('#editReviewModal .star-rate').each(function () {
+            $(this).toggleClass('on', $(this).data('val') <= val);
+        });
+    }
+
+    $(document).ready(function () {
+        if (window.location.hash === '#tabs-2') {
+            $('#reviews-tab-link').tab('show');
+        }
+
+        $('.btn-edit-review').on('click', function () {
+            var rating = $(this).data('rating') || 0;
+            $('#editReviewForm').attr('action', $(this).data('action'));
+            $('#editReviewRating').val(rating);
+            $('#editComment').val($(this).data('comment') || '');
+            $('#btnUpdateReview').prop('disabled', rating <= 0);
+            paintEditStars(rating);
+        });
+
+        $('#editReviewModal .star-rate').on('click', function () {
+            var val = $(this).data('val');
+            $('#editReviewRating').val(val);
+            $('#btnUpdateReview').prop('disabled', false);
+            paintEditStars(val);
+        });
+
+        $('#editReviewModal .star-rate').hover(
+            function () {
+                if ($('#editReviewRating').val() == 0) paintEditStars($(this).data('val'));
+            },
+            function () {
+                paintEditStars($('#editReviewRating').val() || 0);
+            }
+        );
+    });
+</script>
+@endpush
 
 @endsection

@@ -10,18 +10,21 @@
     <link href="{{ asset('assets/admin/css/admin.css') }}" rel="stylesheet">
 </head>
 <body class="bg-light">
-<div class="d-flex flex-column flex-md-row">
+<div class="admin-overlay" id="adminSidebarOverlay" aria-hidden="true"></div>
+<div class="d-flex admin-wrapper">
     @include('admin.partials.sidebar')
 
     <div class="admin-main">
-        <nav class="navbar navbar-expand bg-white border-bottom px-3 py-2">
-            <span class="navbar-brand mb-0 h6">@yield('title', 'Dashboard')</span>
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <span class="small text-muted">
+        <nav class="navbar navbar-expand bg-white border-bottom px-3 py-2 admin-topbar">
+            <button type="button" class="btn btn-link admin-sidebar-toggle d-lg-none" id="adminSidebarToggle" aria-label="Mở menu" aria-expanded="false" aria-controls="adminSidebar">
+                <i class="fa fa-bars"></i>
+            </button>
+            <span class="navbar-brand mb-0 h6 text-truncate">@yield('title', 'Dashboard')</span>
+            <div class="ms-auto d-flex align-items-center gap-2 admin-topbar-actions">
+                <span class="small text-muted d-none d-sm-inline">
                     {{ auth()->user()->name }}
-                    <span class="badge text-bg-secondary">{{ auth()->user()->role->name ?? '' }}</span>
                 </span>
-                <a href="{{ route('home') }}" class="btn btn-sm btn-outline-secondary" target="_blank">Xem site</a>
+                <a href="{{ route('home') }}" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex" target="_blank">Xem site</a>
                 <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-outline-danger">Đăng xuất</button>
@@ -36,6 +39,7 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('assets/admin/js/admin.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

@@ -11,7 +11,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Chỉ lấy danh mục gốc (parent_id = null) và kèm theo danh mục con
+        //  danh mục gốc (parent_id = null) và kèm theo danh mục con
         $categories = Category::whereNull('parent_id')->with('children')->get();
         
         $products = Product::with('images')->where('is_active', 1)->paginate(12);

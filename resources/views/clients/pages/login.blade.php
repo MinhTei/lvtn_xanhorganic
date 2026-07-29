@@ -29,9 +29,9 @@
             </div>
 
             <div class="form-checkbox">
-                <label>
+                <!-- <label>
                     <input type="checkbox" name="remember"> Ghi nhớ đăng nhập
-                </label>
+                </label> -->
                 <a href="{{ route('forgot.password') }}">Quên mật khẩu?</a>
             </div>
 

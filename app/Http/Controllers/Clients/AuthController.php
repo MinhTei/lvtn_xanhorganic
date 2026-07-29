@@ -13,18 +13,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-/**
- * Auth chung cho mọi role (customer / staff / admin).
- * - Đăng nhập / đăng ký dùng 1 giao diện client
- * - Sau login: điều hướng theo role
- *   + admin|staff → /admin
- *   + customer    → /home (và merge giỏ/yêu thích session)
- */
+
 class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        // Đã login rồi → đưa về đúng khu vực theo role
         if (Auth::check()) {
             return $this->redirectByRole(Auth::user());
         }
@@ -75,7 +68,6 @@ class AuthController extends Controller
                 ->with('success', 'Đăng nhập thành công!');
         }
 
-        // Role lạ / không hỗ trợ
         Auth::logout();
 
         return redirect()->route('login')->with('error', 'Tài khoản không hợp lệ.');
@@ -175,7 +167,6 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'Đã đăng xuất thành công!');
     }
 
-    /** Điều hướng theo role (dùng khi đã đăng nhập sẵn) */
     private function redirectByRole(User $user)
     {
         if ($user->canAccessAdmin()) {

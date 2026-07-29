@@ -37,10 +37,10 @@ class Product extends Model
     {
         return $this->hasMany(Cart::class, 'product_id');
     }
-    public function productImages()
-    {
-        return $this->hasMany(ProductImage::class, 'product_id');
-    }
+    // public function productImages()
+    // {
+    //     return $this->hasMany(ProductImage::class, 'product_id');
+    // }
     public function images()
     {
         return $this->hasMany(ProductImage::class, 'product_id');
@@ -60,7 +60,13 @@ class Product extends Model
      */
     public function getImageUrlAttribute(): string
     {
-        return $this->images->where('is_primary', 1)->first()?->image_url
-            ?: asset('assets/clients/img/product/' . $this->slug . '.jpg');
+        $img = $this->images->where('is_primary', 1)->first()
+            ?: $this->images->first();
+
+        if ($img) {
+            return $img->display_url;
+        }
+
+        return asset('assets/clients/img/product/' . $this->slug . '.jpg');
     }
 }

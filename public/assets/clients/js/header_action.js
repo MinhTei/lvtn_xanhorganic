@@ -47,7 +47,28 @@ $(document).ready(function () {
                     $('.wishlist-count').text(response.wishlist_count);
                     response.wishlist_count > 0 ? $('.wishlist-count').show() : $('.wishlist-count').hide();
                     toastr.success(response.message);
-                    openWishlistModal();
+
+                    if (productId) {
+                        var $hearts = $('.js-add-wishlist[data-product-id="' + productId + '"]');
+                        $hearts.removeClass('is-active').attr('title', 'Thêm vào yêu thích');
+                    }
+
+                    if ($('#wishlistModal').hasClass('show')) {
+                        openWishlistModal();
+                    }
+
+                    if ($('#account-wishlist-list').length) {
+                        $.ajax({
+                            url: window.XanhOrganic.wishlistUrl,
+                            type: 'GET',
+                            success: function (html) {
+                                $('#account-wishlist-list').html(html);
+                                if (response.wishlist_count === 0) {
+                                    $('#wishlist .account-head #btn-wishlist-add-all').remove();
+                                }
+                            }
+                        });
+                    }
                 }
             },
             error: function () {
@@ -68,6 +89,8 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     $('.cart-count').text(response.cart_count).show();
+                    $('.wishlist-count').text(response.wishlist_count).hide();
+                    $('.js-add-wishlist').removeClass('is-active').attr('title', 'Thêm vào yêu thích');
                     toastr.success(response.message, 'Giỏ hàng');
                     $('#wishlistModal').modal('hide');
                 } else {
@@ -75,10 +98,19 @@ $(document).ready(function () {
                 }
             },
             error: function (xhr) {
-                var message = (xhr.responseJSON && xhr.responseJSON.message)
-                    ? xhr.responseJSON.message
-                    : 'Không thể thêm vào giỏ hàng.';
-                toastr.warning(message);
+                if (xhr.status === 442) {
+                    if (xhr.responseJSON.errors) {
+                        var errors = xhr.responseJSON.errors;
+                        for (var field in errors) {
+                            toastr.error(errors[field][0], 'Lỗi giỏ hàng!');
+                            break;
+                        }
+                    } else {
+                        toastr.error(xhr.responseJSON.message);
+                    }
+                } else {
+                    toastr.warning('Không có sản phẩm để thêm vào giỏ hàng.');
+                }
             },
             complete: function () {
                 $btn.prop('disabled', false);

@@ -126,19 +126,21 @@
                         <h4>Sản phẩm nổi bật</h4>
                         <div class="latest-product__slider owl-carousel">
                             @foreach($featuredProducts->chunk(3) as $chunk)
-                                <div class="latest-prdouct__slider__item">
+                                <div class="latest-product__slider__item">
                                     @foreach($chunk as $product)
-                                        <a href="{{route('product.detail', $product->slug)}}" class="product-card-horizontal">
-                                            <div class="product-card-horizontal-img">
-                                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
+                                        <div class="latest-product__item">
+                                            <div class="latest-product__item__pic">
+                                                <a href="{{route('product.detail', $product->slug)}}">
+                                                    <img src="{{ $product->image_url ?? asset('assets/clients/img/product/' . ($product->slug ?? '') . '.jpg') }}" alt="{{ $product->name }}">
+                                                </a>
                                             </div>
-                                            <div class="product-card-horizontal-body">
-                                                <h6>{{$product->name}}</h6>
-                                                <span class="price">{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
-                                                <p class="qty">Số lượng: {{$product->quantity}}</p>
+                                            <div class="latest-product__item__text">
+                                                <a href="{{route('product.detail', $product->slug)}}">
+                                                    <h6>{{$product->name}}</h6>
+                                                </a>
+                                                <span>{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
                                             </div>
-
-                                        </a>
+                                        </div>
                                     @endforeach
                                 </div>
                             @endforeach
@@ -150,19 +152,21 @@
                         <h4>Sản phẩm mới</h4>
                         <div class="latest-product__slider owl-carousel">
                             @foreach($latestProducts->chunk(3) as $chunk)
-                                <div class="latest-prdouct__slider__item">
+                                <div class="latest-product__slider__item">
                                     @foreach($chunk as $product)
-                                        <a href="{{route('product.detail', $product->slug)}}" class="product-card-horizontal">
-                                            <div class="product-card-horizontal-img">
-                                                <img src="{{asset('assets/clients/img/product/' . ($product->slug ?? '') . '.jpg')}}"
-                                                    alt="{{$product->name}}">
+                                        <div class="latest-product__item">
+                                            <div class="latest-product__item__pic">
+                                                <a href="{{route('product.detail', $product->slug)}}">
+                                                    <img src="{{ $product->image_url ?? asset('assets/clients/img/product/' . ($product->slug ?? '') . '.jpg') }}" alt="{{$product->name}}">
+                                                </a>
                                             </div>
-                                            <div class="product-card-horizontal-body">
-                                                <h6>{{$product->name}}</h6>
-                                                <span class="price">{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
-                                                <p class="qty">Số lượng: {{$product->quantity}}</p>
+                                            <div class="latest-product__item__text">
+                                                <a href="{{route('product.detail', $product->slug)}}">
+                                                    <h6>{{$product->name}}</h6>
+                                                </a>
+                                                <span>{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
                                             </div>
-                                        </a>
+                                        </div>
                                     @endforeach
                                 </div>
                             @endforeach

@@ -36,11 +36,13 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard', [AdminDashboardController::class, 'index']);
     Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
+    Route::get('/dashboard/export-pdf', [AdminDashboardController::class, 'exportPdf'])->name('admin.dashboard.export.pdf');
 
     // Đơn hàng
     Route::middleware('permission:manage_orders')->group(function () {
         Route::get('orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
         Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
+        Route::get('orders/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('admin.orders.invoice');
         Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.status');
     });
 
@@ -60,8 +62,10 @@ Route::middleware(['admin'])->group(function () {
     });
 
     Route::middleware('permission:manage_users')->group(function () {
+        Route::patch('users/{user}/toggle-block', [AdminUserController::class, 'toggleBlock'])
+            ->name('admin.users.toggle-block');
         Route::resource('users', AdminUserController::class)
-            ->except(['show'])
+            ->except(['create', 'store', 'destroy'])
             ->names('admin.users');
         Route::resource('roles', AdminRoleController::class)
             ->except(['show'])

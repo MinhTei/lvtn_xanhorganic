@@ -7,15 +7,9 @@ use App\Services\ClientCart;
 use App\Services\ClientWishlist;
 use Illuminate\Http\Request;
 
-/**
- * Yêu thích
- *
- * FLOW: Guest + User đều thêm / xem / xóa được (session hoặc DB).
- * Chi tiết: App\Services\ClientWishlist
- */
+
 class WishlistController extends Controller
 {
-    /** Load danh sách vào modal (AJAX) */
     public function index(Request $request)
     {
         $wishlistItems = ClientWishlist::items();
@@ -27,7 +21,6 @@ class WishlistController extends Controller
         return redirect()->route('home');
     }
 
-    /** Thêm yêu thích (AJAX) */
     public function store(Request $request)
     {
         $request->validate([
@@ -39,11 +32,7 @@ class WishlistController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Xóa yêu thích (AJAX)
-     * - Đã login: {wishlist} = id dòng wishlists
-     * - Guest: gửi product_id trong body
-     */
+
     public function destroy(Request $request, $wishlist = null)
     {
         $result = ClientWishlist::remove(
@@ -54,10 +43,7 @@ class WishlistController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Thêm toàn bộ SP trong yêu thích vào giỏ (AJAX).
-     * Guest cũng dùng được (session wishlist → session/DB cart).
-     */
+
     public function addAllToCart()
     {
         $items = ClientWishlist::items();
@@ -92,6 +78,8 @@ class WishlistController extends Controller
         if ($skipped > 0) {
             $msg .= " Bỏ qua {$skipped} sản phẩm.";
         }
+
+        ClientWishlist::clearWishlistAll();
 
         return response()->json([
             'success' => $added > 0,

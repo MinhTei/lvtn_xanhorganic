@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             $table->string('password');
+            //$table->rememberToken();
             $table->enum('status',[
                 'pending',
                 'active',
@@ -35,5 +36,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
+        //Schema::dropColumn('remember_token');
     }
 };

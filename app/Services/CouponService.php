@@ -6,9 +6,7 @@ use App\Models\Coupon;
 use App\Models\CouponUsage;
 use Carbon\Carbon;
 
-/**
- * Áp dụng / kiểm tra mã giảm giá.
- */
+
 class CouponService
 {
     /**
@@ -41,9 +39,16 @@ class CouponService
             ];
         }
 
-        // Mỗi user chỉ dùng 1 lần / mã (nếu có user)
-        if ($userId && CouponUsage::where('coupon_id', $coupon->id)->where('user_id', $userId)->exists()) {
-            return ['success' => false, 'message' => 'Bạn đã sử dụng mã này rồi.'];
+        if ($coupon->usage_limit !== null && $coupon->usages()->count() >= $coupon->usage_limit) {
+            return ['success' => false, 'message' => 'Mã giảm giá đã hết lượt sử dụng trên hệ thống.'];
+        }
+
+        // Mỗi user chỉ dùng giới hạn lượt (mặc định 1)
+        if ($userId) {
+            $userUsages = CouponUsage::where('coupon_id', $coupon->id)->where('user_id', $userId)->count();
+            if ($userUsages >= ($coupon->usage_limit_per_user ?? 1)) {
+                return ['success' => false, 'message' => 'Bạn đã hết lượt sử dụng mã này.'];
+            }
         }
 
         $discount = self::calcDiscount($coupon, $subtotal);

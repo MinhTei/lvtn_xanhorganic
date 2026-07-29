@@ -4,20 +4,13 @@ namespace App\Http\Controllers\Clients;
 
 use App\Http\Controllers\Controller;
 use App\Services\ClientCart;
+use App\Services\ClientWishlist;
 use Illuminate\Http\Request;
+use Validator;
 
-/**
- * Giỏ hàng
- *
- * FLOW:
- * 1. Guest / User đều xem giỏ, thêm, sửa, xóa được (không cần login)
- * 2. Guest lưu SESSION, User lưu DB — xem App\Services\ClientCart
- * 3. Bấm "Thanh toán" → route checkout có middleware auth → mới bắt login
- * 4. Thêm/sửa số lượng: không được vượt products.quantity (tồn kho)
- */
+
 class CartController extends Controller
 {
-    /** Trang giỏ hàng */
     public function index()
     {
         $cartItems = ClientCart::items();
@@ -26,46 +19,64 @@ class CartController extends Controller
         return view('clients.pages.cart', compact('cartItems', 'subtotal'));
     }
 
-    /** Thêm vào giỏ (AJAX) — ai cũng dùng được */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'nullable|integer|min:1',
+    public function store(Request $request){
+        $validator = Validator($request->all(), [
+            'product_id'=>'required|exists:products,id',
+            'quantity'=>'required|integer|min:1',
+        ],[
+            //'quantity.min'=>'Số lượng tối thiểu là 1',
+        ]);
+        if($validator->fails()){
+            return response()->json([
+                'success'=>false,
+                'message'=>'Lỗi dữ liệu đầu vào',
+                'errors'=>$validator->errors()
+            ],422);
+        }
+    
+        $productId = (int) $request->product_id;
+        $quantity = (int) $request->quantity;
+        $result = ClientCart::add($productId, $quantity);
+
+        return response()->json($result,$result['success']?200:422);
+
+    }
+
+    public function update (Request $request , int $productId){
+        //validate
+        $validator = Validator($request->all(),[
+            'quantity'=>'required|min:1|integer',
+
+        ],[
+            'quantity.min'=>'Số lượng tối thiểu là 1!',
         ]);
 
-        $result = ClientCart::add(
-            (int) $request->product_id,
-            (int) ($request->quantity ?? 1)
-        );
-
-        return response()->json($result, $result['success'] ? 200 : 422);
-    }
-
-    /**
-     * Cập nhật số lượng (AJAX trang giỏ).
-     * {product} = product_id
-     */
-    public function update(Request $request, int $product)
-    {
-        $request->validate(['quantity' => 'required|integer|min:1']);
-
-        $result = ClientCart::update($product, (int) $request->quantity);
-
-        // Vượt tồn kho → trả JSON lỗi để JS hiện toast (không cập nhật HTML)
-        if (!$result['success']) {
-            return response()->json($result, 422);
+        if($validator->fails()){
+            return response()->json([
+                'success'=> false,
+                'message'=>'Lỗi dữ liệu',
+                'errors'=>$validator->errors()
+            ],422);
         }
 
-        // Thành công → trả lại HTML trang giỏ
+        //giao việc
+        $quantity =(int) $request->quantity;
+        //$result = ClientCart::update($productId,$quantity);
+        // $result = [
+        //     'success'=> false,
+        //     'message'=>' Đã tới Controller, ID là '. $productId . ' và số lượng là '. $quantity
+        // ];
+        $result = ClientCart::update($productId,$quantity);
+
+        if(!$result['success']){
+            return response()->json($result,422);
+        }
         return $this->index();
     }
 
-    /** Xóa sản phẩm khỏi giỏ theo product_id */
-    public function destroy(int $product)
-    {
-        ClientCart::remove($product);
-
-        return $this->index();
+    public function destroy (int $productId){
+        ClientCart::remove($productId);
+        return $this -> index();
     }
+
 }

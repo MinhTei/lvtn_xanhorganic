@@ -1,7 +1,4 @@
-/**
- * Thêm giỏ / yêu thích — guest và user đều dùng được.
- * Ràng buộc tồn kho: không cho thêm quá products.quantity.
- */
+
 $(document).ready(function () {
     $.ajaxSetup({
         headers: {
@@ -9,7 +6,6 @@ $(document).ready(function () {
             'Accept': 'application/json'
         }
     });
-
     function updateWishlistBadge(count) {
         var $badge = $('.wishlist-count');
         $badge.text(count);
@@ -22,106 +18,108 @@ $(document).ready(function () {
         count > 0 ? $badge.show() : $badge.hide();
     }
 
-    // ---- Yêu thích ----
-    $(document).on('click', '.js-add-wishlist', function (e) {
-        e.preventDefault();
-        var productId = $(this).data('product-id');
+    function setWishlistHeartState(productId, isActive) {
+        var $btns = $('.js-add-wishlist[data-product-id="' + productId + '"]');
+        $btns.toggleClass('is-active', !!isActive);
+        $btns.attr('title', isActive ? 'Đã yêu thích' : 'Thêm vào yêu thích');
+    }
 
-        $.ajax({
-            url: window.XanhOrganic.wishlistAddUrl,
-            type: 'POST',
-            data: { product_id: productId },
-            success: function (response) {
-                if (response.success) {
-                    updateWishlistBadge(response.wishlist_count);
-                    toastr.success(response.message, 'Yêu thích');
-                } else {
-                    toastr.warning(response.message);
-                }
-            },
-            error: function (xhr) {
-                var message = (xhr.responseJSON && xhr.responseJSON.message)
-                    ? xhr.responseJSON.message
-                    : 'Có lỗi xảy ra!';
-                toastr.error(message);
-            }
-        });
-    });
 
-    // ---- Giỏ hàng ----
+
+    //Viết lại giỏ hnafg
     $(document).on('click', '.js-add-cart', function (e) {
         e.preventDefault();
-
-        var $btn = $(this);
-        var productId = $btn.data('product-id');
-        var stock = parseInt($btn.data('stock'), 10);
-
-        // Hết hàng (nút trên lưới / chi tiết)
-        if (!isNaN(stock) && stock < 1) {
-            toastr.warning('Sản phẩm đã hết hàng.');
+        var btn = $(this);
+        var productId = btn.data('product-id');
+        var quantity = 1;
+        var stock = parseInt(btn.data('stock'), 10);
+        var inputQty = $('#quantity');
+        if (stock === 0 || stock < 1) {
+            toastr.error('Sản phẩm đã hết hàng!');
             return;
         }
-
-        // Ô số lượng ở trang chi tiết (#quantity)
-        var $qtyInput = $('#quantity');
-        var quantity = 1;
-        if ($qtyInput.length) {
-            quantity = parseInt($qtyInput.val(), 10);
-            var max = parseInt($qtyInput.attr('max'), 10);
-
+        if (inputQty.length > 0) {
+            quantity = parseInt(inputQty.val(), 10);
             if (isNaN(quantity) || quantity < 1) {
                 quantity = 1;
-                $qtyInput.val(1);
+                inputQty.val(1);
             }
 
-            // Nhập quá tồn kho trên form chi tiết
-            if (!isNaN(max) && quantity > max) {
-                toastr.warning('Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + ' sản phẩm.');
-                $qtyInput.val(max);
+            if (!isNaN(stock) && quantity > stock) {
+                toastr.warning('Số lượng vượt tồn kho! Hiện chỉ còn ' + stock + ' sản phẩm!');
+                quantity = stock;
+                inputQty.val(stock);
                 return;
             }
-        }
 
+        }
         $.ajax({
             url: window.XanhOrganic.cartAddUrl,
             type: 'POST',
+            dataType: 'json',
             data: {
                 product_id: productId,
                 quantity: quantity
             },
             success: function (response) {
-                if (response.success) {
-                    updateCartBadge(response.cart_count);
-                    toastr.success(response.message, 'Giỏ hàng');
-                } else {
-                    toastr.warning(response.message);
-                }
+                //$('.cart-count').text(response.cart_count).show();
+                updateCartBadge(response.cart_count);
+                toastr.success(response.message, 'Thêm thành công!');
             },
             error: function (xhr) {
-                // 422: vượt tồn kho / hết hàng
-                var message = (xhr.responseJSON && xhr.responseJSON.message)
-                    ? xhr.responseJSON.message
-                    : 'Có lỗi xảy ra!';
-                toastr.warning(message);
+                if (xhr.status === 422) {
+                    //Kịch Control
+                    if (xhr.responseJSON.errors) {
+                        var errors = xhr.responseJSON.errors;
+                        for (var field in errors) {
+                            toastr.error(errors[field][0], 'Lỗi nhập liệu!');
+                            break;
+                        }
+                    }
+                    //Kịch Client
+                    else if (xhr.responseJSON.message) {
+                        toastr.warning(xhr.responseJSON.message, 'Từ chối yêu cầu');
+                    }
+                } else {
+                    toastr.error('Có lỗi kết nối với máy chủ!');
+                }
+
             }
+
+
+
         });
     });
 
-    // Ràng buộc ô số lượng trang chi tiết khi gõ / tăng giảm
-    $(document).on('change blur', '#quantity', function () {
-        var $input = $(this);
-        var val = parseInt($input.val(), 10);
-        var max = parseInt($input.attr('max'), 10) || 1;
-        var min = parseInt($input.attr('min'), 10) || 1;
 
-        if (isNaN(val) || val < min) {
-            $input.val(min);
-            return;
-        }
-
-        if (val > max) {
-            toastr.warning('Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + ' sản phẩm.');
-            $input.val(max);
-        }
+    //Viết lại yêu thích
+    $(document).on('click','.js-add-wishlist', function(e){
+        e.preventDefault();
+        var btn = $(this);
+        var productId = btn.data('product-id');
+        $.ajax({
+            url:window.XanhOrganic.wishlistAddUrl,
+            type:'POST',
+            dataType: 'json',
+            data : {
+                product_id: productId
+            },
+            success: function(response){
+                if(response.success){
+                    updateWishlistBadge(response.wishlist_count);
+                    setWishlistHeartState(productId, response.action === 'added');
+                    toastr.success(response.message, 'Yêu thích');
+                }
+                else{
+                    toastr.warning(response.message,'Thất bại');
+                }
+            },
+            error:function(xhr){
+                toastr.error('Có lỗi kết nối với máy chủ');
+            }
+            
+        });
     });
+
+
 });

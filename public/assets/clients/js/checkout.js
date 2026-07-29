@@ -16,11 +16,6 @@ $(document).ready(function () {
         }
     }
 
-    function updatePaymentMethod() {
-        $('input[name="payment_method"]').closest('.payment-method-label').removeClass('active');
-        $('input[name="payment_method"]:checked').closest('.payment-method-label').addClass('active');
-    }
-
     function fillDeliverySlots(keepOld) {
         var $select = $('#delivery_slot');
         if (!$select.length) return;
@@ -33,9 +28,6 @@ $(document).ready(function () {
             day = 'tomorrow';
             $('input[name="delivery_day"][value="tomorrow"]').prop('checked', true);
         }
-
-        $('input[name="delivery_day"]').closest('.payment-method-label').removeClass('active');
-        $('input[name="delivery_day"]:checked').closest('.payment-method-label').addClass('active');
 
         var slots = (groups[day] && groups[day].slots) ? groups[day].slots : {};
         var oldVal = keepOld ? ($select.data('old') || $select.val()) : '';
@@ -68,13 +60,11 @@ $(document).ready(function () {
     }
 
     $('input[name="address_type"]').on('change', updateAddressType);
-    $('input[name="payment_method"]').on('change', updatePaymentMethod);
     $(document).on('change', 'input[name="delivery_day"]', function () {
         fillDeliverySlots(false);
     });
 
     updateAddressType();
-    updatePaymentMethod();
     fillDeliverySlots(true);
     recalcTotal();
 

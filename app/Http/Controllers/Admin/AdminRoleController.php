@@ -9,10 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-/**
- * Quản lý Role & Permission — có thể thêm/xóa mọi role
- * (kể cả hệ thống), miễn còn điều kiện an toàn.
- */
+
 class AdminRoleController extends Controller
 {
     public function index()
@@ -84,12 +81,12 @@ class AdminRoleController extends Controller
 
     public function destroy(Role $role)
     {
-        // Role hệ thống không được xóa
+        // hệ thống không được xóa
         if (in_array($role->name, ['admin', 'staff', 'customer'], true)) {
             return back()->with('error', 'Không thể xóa role hệ thống (admin / staff / customer).');
         }
 
-        // Không xóa role của chính mình đang đăng nhập
+        // ko xóa role của chính mình đang đăng nhập
         if (Auth::user()->role_id === $role->id) {
             return back()->with('error', 'Bạn không thể xóa role đang dùng của chính mình.');
         }

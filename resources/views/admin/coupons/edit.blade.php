@@ -56,6 +56,22 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Số lượng sử dụng tối đa (Bỏ trống nếu Không giới hạn)</label>
+                    <input type="number" name="usage_limit" class="form-control" min="1"
+                           value="{{ old('usage_limit', $coupon->usage_limit ?? '') }}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Lượt dùng mỗi tài khoản *</label>
+                    <input type="number" name="usage_limit_per_user" class="form-control" min="1"
+                           value="{{ old('usage_limit_per_user', $coupon->usage_limit_per_user ?? 1) }}" required>
+                </div>
+            </div>
+        </div>
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn-admin">Lưu</button>

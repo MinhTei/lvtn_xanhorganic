@@ -5,7 +5,6 @@
 <div class="panel">
     <div class="panel__head">
         <h2>Người dùng</h2>
-        <a href="{{ route('admin.users.create') }}" class="btn-admin"><i class="fa fa-plus"></i> Thêm</a>
     </div>
 
     <form class="filters" method="GET">
@@ -18,9 +17,9 @@
         </select>
         <select name="status" class="form-select">
             <option value="">Trạng thái</option>
-            @foreach(['pending','active','blocked','deleted'] as $st)
-                <option value="{{ $st }}" @selected(request('status') === $st)>{{ $st }}</option>
-            @endforeach
+            <option value="active" @selected(request('status') === 'active')>Đang hoạt động</option>
+            <option value="blocked" @selected(request('status') === 'blocked')>Đã khóa</option>
+            <option value="pending" @selected(request('status') === 'pending')>Chờ kích hoạt</option>
         </select>
         <button class="btn-admin btn-sm-admin" type="submit">Lọc</button>
     </form>
@@ -39,30 +38,40 @@
             </thead>
             <tbody>
                 @forelse($users as $user)
+                    @php
+                        $statusLabel = match($user->status) {
+                            'active' => 'Đang hoạt động',
+                            'blocked' => 'Đã khóa',
+                            'pending' => 'Chờ kích hoạt',
+                            default => $user->status,
+                        };
+                        $badge = match($user->status) {
+                            'active' => 'badge-soft',
+                            'pending' => 'badge-warn',
+                            'blocked' => 'badge-danger',
+                            default => 'badge-muted',
+                        };
+                    @endphp
                     <tr>
                         <td>{{ $user->id }}</td>
                         <td><strong>{{ $user->name }}</strong><div class="text-muted" style="font-size:.8rem;">{{ $user->phone }}</div></td>
                         <td>{{ $user->email }}</td>
                         <td><span class="badge-soft">{{ $user->role->name ?? '—' }}</span></td>
-                        <td>
-                            @php
-                                $badge = match($user->status) {
-                                    'active' => 'badge-soft',
-                                    'pending' => 'badge-warn',
-                                    'blocked', 'deleted' => 'badge-danger',
-                                    default => 'badge-muted',
-                                };
-                            @endphp
-                            <span class="{{ $badge }}">{{ $user->status }}</span>
-                        </td>
+                        <td><span class="{{ $badge }}">{{ $statusLabel }}</span></td>
                         <td class="text-nowrap">
-                            <a href="{{ route('admin.users.edit', $user) }}" class="btn-admin btn-admin-outline btn-sm-admin">Sửa</a>
-                            @if($user->id !== auth()->id())
-                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Vô hiệu hóa tài khoản này?');">
-                                @csrf @method('DELETE')
-                                <button class="btn-admin btn-admin-danger btn-sm-admin" type="submit">Vô hiệu</button>
-                            </form>
+                            <a href="{{ route('admin.users.show', $user) }}" class="btn-admin btn-admin-outline btn-sm-admin">Chi tiết</a>
+                            <a href="{{ route('admin.users.edit', $user) }}" class="btn-admin btn-admin-outline btn-sm-admin">Gán role</a>
+                            @if($user->id !== auth()->id() && in_array($user->status, ['active', 'blocked'], true))
+                                <form action="{{ route('admin.users.toggle-block', $user) }}" method="POST" class="d-inline"
+                                      onsubmit="return confirm('{{ $user->status === 'active' ? 'Khóa tài khoản này?' : 'Mở khóa tài khoản này?' }}');">
+                                    @csrf
+                                    @method('PATCH')
+                                    @if($user->status === 'active')
+                                        <button class="btn-admin btn-admin-danger btn-sm-admin" type="submit">Khóa</button>
+                                    @else
+                                        <button class="btn-admin btn-sm-admin" type="submit">Mở khóa</button>
+                                    @endif
+                                </form>
                             @endif
                         </td>
                     </tr>

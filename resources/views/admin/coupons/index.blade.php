@@ -18,6 +18,7 @@
                     <th>Đơn tối thiểu</th>
                     <th>Thời gian</th>
                     <th>Đã dùng</th>
+                    <th>Mỗi tài khoản</th>
                     <th></th>
                 </tr>
             </thead>
@@ -39,7 +40,8 @@
                             →
                             {{ \Carbon\Carbon::parse($coupon->end_date)->format('d/m/Y') }}
                         </td>
-                        <td>{{ $coupon->usages_count }}</td>
+                        <td>{{ $coupon->usages_count }} / {{ $coupon->usage_limit ? $coupon->usage_limit : 'Vô hạn' }}</td>
+                        <td>{{ $coupon->usage_limit_per_user }}</td>
                         <td class="text-nowrap">
                             <a href="{{ route('admin.coupons.edit', $coupon) }}" class="btn-admin btn-admin-outline btn-sm-admin">Sửa</a>
                             <form action="{{ route('admin.coupons.destroy', $coupon) }}" method="POST" class="d-inline"

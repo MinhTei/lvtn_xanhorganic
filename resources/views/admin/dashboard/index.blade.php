@@ -3,35 +3,25 @@
 @section('title', 'Dashboard')
 
 @section('content')
-{{-- Bộ lọc thời gian --}}
+{{-- Bộ lọc theo khoảng ngày --}}
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-2 align-items-end">
             <div class="col-auto">
-                <label class="form-label small mb-0">Khoảng thời gian</label>
-                <select name="range" id="range" class="form-select form-select-sm" onchange="toggleCustom(this.value)">
-                    <option value="today" @selected($range === 'today')>Hôm nay</option>
-                    <option value="7" @selected($range === '7')>7 ngày</option>
-                    <option value="30" @selected($range === '30')>30 ngày</option>
-                    <option value="month" @selected($range === 'month')>Tháng này</option>
-                    <option value="custom" @selected($range === 'custom')>Tùy chọn</option>
-                </select>
+                <label class="form-label small mb-0">Từ ngày</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}" required>
             </div>
-            <div class="col-auto custom-dates" style="{{ $range === 'custom' ? '' : 'display:none' }}">
-                <label class="form-label small mb-0">Từ</label>
-                <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}">
-            </div>
-            <div class="col-auto custom-dates" style="{{ $range === 'custom' ? '' : 'display:none' }}">
-                <label class="form-label small mb-0">Đến</label>
-                <input type="date" name="to" class="form-control form-control-sm" value="{{ $to }}">
+            <div class="col-auto">
+                <label class="form-label small mb-0">Đến ngày</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="{{ $to }}" required>
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
             </div>
             <div class="col-auto">
-                <a href="{{ route('admin.dashboard.export', request()->query()) }}"
-                   class="btn btn-success btn-sm">
-                    Xuất báo cáo CSV
+                <a href="{{ route('admin.dashboard.export.pdf', request()->query()) }}"
+                   class="btn btn-outline-danger btn-sm">
+                    Xuất PDF
                 </a>
             </div>
             <div class="col-auto small text-muted pb-1">
@@ -44,7 +34,7 @@
 {{-- Thống kê nhanh --}}
 <div class="row g-3 mb-3">
     <div class="col-md-4">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
                 <div class="text-muted small">Tổng doanh thu</div>
                 <div class="fs-4 fw-semibold">{{ number_format($stats['revenue'], 0, ',', '.') }}₫</div>
@@ -53,7 +43,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
                 <div class="text-muted small">Số đơn hàng</div>
                 <div class="fs-4 fw-semibold">{{ $stats['orders'] }}</div>
@@ -61,10 +51,10 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small">Số sản phẩm</div>
-                <div class="fs-4 fw-semibold">{{ $stats['products'] }}</div>
+                <div class="text-muted small">Tổng người dùng</div>
+                <div class="fs-4 fw-semibold">{{ $stats['users'] }}</div>
             </div>
         </div>
     </div>
@@ -173,12 +163,6 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-function toggleCustom(val) {
-    document.querySelectorAll('.custom-dates').forEach(function (el) {
-        el.style.display = val === 'custom' ? '' : 'none';
-    });
-}
-
 new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {

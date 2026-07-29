@@ -5,15 +5,6 @@
 <div class="card" style="max-width:640px;">
     <div class="card-header bg-white">Import sản phẩm từ CSV</div>
     <div class="card-body">
-        <p class="small text-muted">
-            Cột bắt buộc: <code>name, category_slug, price, quantity, unit</code><br>
-            Tuỳ chọn: <code>sale_price, description, is_featured, is_active, delivery_mode, image_url</code><br>
-            <code>delivery_mode</code>:
-            <code>both</code> = hàng tươi (khung giờ) |
-            <code>standard</code> = hàng khô 3–5 ngày |
-            <code>express</code> = chỉ giao nhanh 2h
-        </p>
-
         <a href="{{ route('admin.products.import.template') }}" class="btn btn-sm btn-outline-secondary mb-3">
             Tải file mẫu CSV
         </a>

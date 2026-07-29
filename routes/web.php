@@ -14,21 +14,7 @@ use App\Http\Controllers\Clients\ResetPasswordController;
 use App\Http\Controllers\Clients\WishlistController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes — Xanh Organic
-|--------------------------------------------------------------------------
-|
-| PUBLIC (ai cũng vào):
-|   - Xem SP, thêm giỏ, thêm yêu thích, xem giỏ
-|
-| CẦN LOGIN (auth.custom):
-|   - Tài khoản, đặt hàng (checkout), logout
-|
-| Guest thêm giỏ/yêu thích → lưu SESSION
-| Sau login → gộp SESSION vào DB (AuthController)
-|
-*/
+
 
 Route::get('/', fn () => redirect()->route('home'));
 Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -62,22 +48,19 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])->name('password.update');
 });
 
-// ---- Yêu thích: guest + user (không auth) ----
 Route::get('/wishlists', [WishlistController::class, 'index'])->name('wishlists');
 Route::post('/wishlists/add', [WishlistController::class, 'store'])->name('wishlist.store');
 Route::post('/wishlists/add-all-to-cart', [WishlistController::class, 'addAllToCart'])->name('wishlist.addAllToCart');
 Route::delete('/wishlists/{wishlist?}', [WishlistController::class, 'destroy'])->name('wishlist.remove');
 
-// ---- Giỏ hàng: guest + user (không auth) ----
-// {product} luôn là product_id để guest/user dùng chung 1 cách
+
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::post('/cart/add', [CartController::class, 'store'])->name('cart.store');
 Route::put('/cart/{product}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
 
-// ---- Cần đăng nhập ----
 Route::middleware('auth.custom')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::prefix('account')->group(function () {
         Route::get('/', [AccountController::class, 'index'])->name('account');
@@ -91,18 +74,17 @@ Route::middleware('auth.custom')->group(function () {
         Route::get('/order/{order}/detail', [AccountController::class, 'showOrderDetail'])->name('account.order.detail');
         Route::post('/order/{order}/cancel', [AccountController::class, 'cancelOrder'])->name('order-detail.cancel');
         Route::post('/order/{order}/review/{product}', [AccountController::class, 'storeReview'])->name('order-detail.review');
-        Route::put('/order/{order}/review/{review}', [AccountController::class, 'updateReview'])->name('order-detail.review.update');
-        Route::delete('/order/{order}/review/{review}', [AccountController::class, 'destroyReview'])->name('order-detail.review.destroy');
     });
 
-    // Checkout: đây mới bắt login (guest bấm thanh toán → login → quay lại checkout)
+    Route::put('/products/{product}/reviews/{review}', [ProductDetailController::class, 'updateReview'])->name('product.review.update');
+    Route::delete('/products/{product}/reviews/{review}', [ProductDetailController::class, 'destroyReview'])->name('product.review.destroy');
+
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.post');
     Route::post('/checkout/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.coupon');
     Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 });
 
-// VNPay callbacks (return không bắt buộc login — IPN server-to-server)
 Route::get('/vnpay/return', [\App\Http\Controllers\Clients\VnPayController::class, 'return'])->name('vnpay.return');
 Route::get('/vnpay/ipn', [\App\Http\Controllers\Clients\VnPayController::class, 'ipn']);
 Route::post('/vnpay/ipn', [\App\Http\Controllers\Clients\VnPayController::class, 'ipn'])->name('vnpay.ipn');

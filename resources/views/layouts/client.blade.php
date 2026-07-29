@@ -32,6 +32,7 @@
         $cartCount = \App\Services\ClientCart::count();
         $wishlistCount = \App\Services\ClientWishlist::count();
     @endphp
+
     <script>
         window.XanhOrganic = {
             isLoggedIn: {{ auth()->check() ? 'true' : 'false' }},

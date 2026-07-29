@@ -1,31 +1,23 @@
-{{--
-    Partial: product_actions
-    Biến nhận vào: $product (App\Models\Product)
-    data-stock: tồn kho để JS chặn thêm khi hết hàng / vượt số lượng
---}}
+@php $inWishlist = \App\Services\ClientWishlist::constains($product->id); @endphp
 <div class="product-actions">
     <a href="javascript:void(0)"
-       class="btn-heart js-add-wishlist"
+       class="btn-heart js-add-wishlist {{ $inWishlist ? 'is-active' : '' }}"
        data-product-id="{{ $product->id }}"
-       title="Thêm vào yêu thích">
-        <i class="fa fa-heart"></i>
+       title="{{ $inWishlist ? 'Đã yêu thích' : 'Thêm vào yêu thích' }}">
+        <i class="fa fa-heart"></i> 
     </a>
 
     @if($product->quantity > 0)
         <a href="javascript:void(0)"
-           class="btn-add-cart js-add-cart"
+           class="btn-cart js-add-cart"
            data-product-id="{{ $product->id }}"
            data-stock="{{ $product->quantity }}"
            title="Thêm vào giỏ hàng">
             <i class="fa fa-shopping-cart"></i> Thêm giỏ hàng
         </a>
     @else
-        <a href="javascript:void(0)"
-           class="btn-add-cart disabled"
-           data-stock="0"
-           title="Hết hàng"
-           style="opacity: 0.55; pointer-events: none; cursor: not-allowed;">
+        <span class="btn-cart is-disabled" title="Hết hàng">
             <i class="fa fa-ban"></i> Hết hàng
-        </a>
+        </span>
     @endif
 </div>

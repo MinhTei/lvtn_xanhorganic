@@ -20,132 +20,147 @@ class ClientWishlist
 {
     public const SESSION_KEY = 'wishlist';
 
-    /** Lấy list item (object có id + product) để Blade/AJAX dùng chung */
+    public static function count(): int
+    {
+        if (Auth::check()) {
+            return Auth::user()->wishlists()->count();
+
+        }
+        return count(session(self::SESSION_KEY, []));
+    }
+
     public static function items(): Collection
     {
         if (Auth::check()) {
             return Auth::user()->wishlists()->with('product.images')->get();
         }
-
-        $ids = array_map('intval', session(self::SESSION_KEY, []));
-        if (empty($ids)) {
+        //lấy trong giỏ hàng nhma phải chắc là lấy int
+        $wishlistIds = array_map('intval', session(self::SESSION_KEY, []));
+        if (empty($wishlistIds)) {
             return collect();
         }
-
+        //lấy thông tin mảng
         return Product::with('images')
-            ->whereIn('id', $ids)
+            ->whereIn('id', $wishlistIds)
             ->get()
             ->map(function ($product) {
                 return (object) [
-                    'id' => null, // guest không có wishlist row id
-                    'product' => $product,
+                    'id' => null, //id bản wisshlist
+                    'product' => $product,//dữ liệu sản phẩm
                 ];
             });
-    }
 
-    public static function count(): int
+
+      
+    }
+    public static function constains(int $productId): bool
     {
         if (Auth::check()) {
-            return Auth::user()->wishlists()->count();
+            return Auth::user()->wishlists()->where('product_id', $productId)->exists();
         }
+        $wishlistIds = array_map('intval', session(self::SESSION_KEY, []));
+        return in_array($productId, $wishlistIds, true);
 
-        return count(session(self::SESSION_KEY, []));
+
     }
 
-    /** @return array{success:bool,message:string,wishlist_count:int} */
     public static function add(int $productId): array
     {
         Product::findOrFail($productId);
 
+
         if (Auth::check()) {
             $user = Auth::user();
-            $exists = $user->wishlists()->where('product_id', $productId)->exists();
-
-            if ($exists) {
+            $existing = $user->wishlists()->where('product_id', $productId)->first();
+            if ($existing) {
+                $existing->delete();
                 return [
                     'success' => true,
-                    'message' => 'Sản phẩm đã có trong danh sách yêu thích',
-                    'wishlist_count' => $user->wishlists()->count(),
+                    'action' => 'removed',
+                    'message' => 'Đã xóa yêu thích',
+                    'wishlist_count' => self::count(),
                 ];
             }
 
             $user->wishlists()->create(['product_id' => $productId]);
-
             return [
                 'success' => true,
-                'message' => 'Thêm vào danh sách yêu thích thành công',
-                'wishlist_count' => $user->wishlists()->count(),
+                'action' => 'added',
+                'message' => 'Thêm yêu thích thành công!',
+                'wishlist_count' => self::count(),
             ];
         }
-
-        $wishlist = array_map('intval', session(self::SESSION_KEY, []));
-
-        if (!in_array($productId, $wishlist, true)) {
-            $wishlist[] = $productId;
-            session([self::SESSION_KEY => array_values($wishlist)]);
-
+        $wishlistIds = array_map('intval', session(self::SESSION_KEY, []));
+        if (in_array($productId, $wishlistIds, true)) {
+            $wishlistIds = array_values((array_filter($wishlistIds, fn($id) => $id !== $productId)));
+            session([self::SESSION_KEY => $wishlistIds]);
             return [
                 'success' => true,
-                'message' => 'Đã thêm yêu thích thành công',
-                'wishlist_count' => count($wishlist),
+                'action' => 'removed',
+                'message' => 'Đã xóa yêu thích',
+                'wishlist_count' => count($wishlistIds),
             ];
         }
-
+        $wishlistIds[] = $productId;
+        session([self::SESSION_KEY => array_values($wishlistIds)]);
         return [
-            'success' => false,
-            'message' => 'Sản phẩm đã có trong danh sách yêu thích',
-            'wishlist_count' => count($wishlist),
+            'success' => true,
+            'action' => 'added',
+            'message' => ' Thêm yêu thích thành công!',
+            'wishlist_count' => count($wishlistIds),
         ];
+       
+
     }
 
-    /**
-     * Xóa yêu thích.
-     * - User: truyền wishlist row id
-     * - Guest: truyền product_id
-     */
     public static function remove(?int $wishlistId = null, ?int $productId = null): array
     {
         if (Auth::check()) {
             Auth::user()->wishlists()->where('id', $wishlistId)->delete();
+        } else {
+            //Báo ra ngoài
+            $wishlistIds = array_map('intval', session(self::SESSION_KEY, []));
+            $wishlistIds = array_values(array_filter($wishlistIds, fn($id) => $id !== $productId));
+            session([self::SESSION_KEY => $wishlistIds]);
 
-            return [
-                'success' => true,
-                'message' => 'Đã xóa khỏi danh sách yêu thích',
-                'wishlist_count' => Auth::user()->wishlists()->count(),
-            ];
         }
-
-        $productId = (int) $productId;
-        $wishlist = collect(session(self::SESSION_KEY, []))
-            ->map(fn ($id) => (int) $id)
-            ->reject(fn ($id) => $id === $productId)
-            ->values()
-            ->all();
-
-        session([self::SESSION_KEY => $wishlist]);
-
         return [
             'success' => true,
-            'message' => 'Đã xóa khỏi danh sách yêu thích',
-            'wishlist_count' => count($wishlist),
+            'message' => 'Xóa yêu thích thành công',
+            'wishlist_count' => self::count()
         ];
     }
 
-    /** Gộp wishlist session → DB khi login */
     public static function mergeSessionToUser(User $user): void
     {
-        $ids = array_map('intval', session(self::SESSION_KEY, []));
-        if (empty($ids)) {
+        $wishlistIds = array_map('intval', session(self::SESSION_KEY, []));
+        if (empty($wishlistIds)) {
             return;
         }
-
-        foreach ($ids as $productId) {
-            if (!Product::where('id', $productId)->exists()) {
+        foreach ($wishlistIds as $productId) {
+            $product = Product::find($productId);
+            if (!$product) {
                 continue;
             }
-            $user->wishlists()->firstOrCreate(['product_id' => $productId]);
+            $wishlistExistDB = $user->wishlists()->where('product_id', $productId)->first();
+            if ($wishlistExistDB) {
+                continue;
+            }else{
+                $user->wishlists()->create([
+                    'product_id' => $productId
+                ]);
+            }
         }
-
         session()->forget(self::SESSION_KEY);
+        
+
     }
+    public static function clearWishlistAll(): void{
+        if(Auth::check()){
+            Auth::user()->wishlists()->delete();
+        }else{
+            session()->forget(self::SESSION_KEY);
+        }
+    }
+   
 }

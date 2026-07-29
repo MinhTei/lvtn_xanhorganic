@@ -58,10 +58,48 @@
 </div>
 
 <div class="form-group">
-    <label>URL ảnh chính</label>
-    <input type="text" name="image_url" class="form-control"
-           value="{{ old('image_url', $primaryImage ?? '') }}"
-           placeholder="https://... hoặc /assets/clients/img/...">
+    <label>Ảnh sản phẩm</label>
+    <input type="file" name="images[]" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp,image/gif" multiple>
+    <small class="text-muted">Có thể chọn nhiều ảnh (JPG, PNG, WEBP). Ảnh đầu tiên sẽ là ảnh chính nếu chưa có ảnh.</small>
+
+    @if(!empty($p) && $p->images->isNotEmpty())
+        <div class="d-flex flex-wrap gap-2 mt-2" id="product-existing-images">
+            @foreach($p->images as $img)
+                <div class="position-relative product-img-thumb" style="width:100px;">
+                    <img src="{{ $img->display_url }}" alt=""
+                         class="rounded border d-block"
+                         style="width:100px;height:100px;object-fit:cover;">
+                    <button type="button"
+                            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-0 product-img-remove"
+                            style="width:22px;height:22px;line-height:20px;font-size:14px;"
+                            data-id="{{ $img->id }}"
+                            title="Xóa ảnh"
+                            aria-label="Xóa ảnh">&times;</button>
+                    @if($img->is_primary)
+                        <span class="badge bg-success position-absolute bottom-0 start-0 m-1" style="font-size:10px;">Chính</span>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+        <div id="product-delete-images"></div>
+        <script>
+            document.querySelectorAll('.product-img-remove').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var wrap = btn.closest('.product-img-thumb');
+                    var id = btn.getAttribute('data-id');
+                    var holder = document.getElementById('product-delete-images');
+                    if (holder && id) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'delete_images[]';
+                        input.value = id;
+                        holder.appendChild(input);
+                    }
+                    if (wrap) wrap.remove();
+                });
+            });
+        </script>
+    @endif
 </div>
 
 <div class="form-group">

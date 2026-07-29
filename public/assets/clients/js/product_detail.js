@@ -22,6 +22,8 @@ $(document).ready(function() {
     $('.product-thumb').on('click', function() {
         var imageUrl = $(this).data('image');
         $('#mainProductImage').attr('src', imageUrl);
+        $('.product-thumb').removeClass('active');
+        $(this).addClass('active');
     });
 });
 

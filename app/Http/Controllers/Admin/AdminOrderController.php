@@ -3,20 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderStatusUpdatedMail;
 use App\Models\Order;
 use App\Models\OrderStatusLogs;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
-/**
- * Quản lý đơn hàng: xem danh sách, chi tiết, đổi trạng thái.
- *
- * Ràng buộc luồng (Order::STATUS_FLOW):
- *   pending → processing → shipped → delivered
- *   pending / processing → cancelled
- *   Không được nhảy bước hoặc quay ngược.
- */
 class AdminOrderController extends Controller
 {
     public function index(Request $request)
@@ -55,6 +51,18 @@ class AdminOrderController extends Controller
         ]);
     }
 
+    public function invoice(Order $order)
+    {
+        $order->load(['user', 'orderItems', 'orderPayment']);
+
+        $pdf = Pdf::loadView('admin.orders.invoice', [
+            'order' => $order,
+            'statusLabels' => Order::STATUS_LABELS,
+        ])->setPaper('a4');
+
+        return $pdf->stream('hoa-don-' . $order->order_code . '.pdf');
+    }
+
     public function updateStatus(Request $request, Order $order)
     {
         $allowed = $order->allowedNextStatuses();
@@ -82,29 +90,100 @@ class AdminOrderController extends Controller
             );
         }
 
-        DB::transaction(function () use ($order, $data) {
-            $old = $order->status;
+        // Xác nhận đơn: kiểm tra tồn kho thực tế trước khi chuyển trạng thái
+        if ($data['status'] === 'processing') {
+            $this->assertStockEnoughToConfirm($order);
+        }
 
-            // Hủy đơn → hoàn tồn kho
-            if ($data['status'] === 'cancelled') {
-                $order->load('orderItems.product');
-                foreach ($order->orderItems as $item) {
-                    if ($item->product) {
-                        $item->product->increment('quantity', $item->quantity);
+        $oldStatus = $order->status;
+
+        try {
+            DB::transaction(function () use ($order, $data) {
+                $old = $order->status;
+
+                if ($data['status'] === 'cancelled') {
+                    $order->load('orderItems.product');
+                    foreach ($order->orderItems as $item) {
+                        if ($item->product) {
+                            $item->product->increment('quantity', $item->quantity);
+                        }
                     }
                 }
+
+                $order->update(['status' => $data['status']]);
+
+                if ($data['status'] === 'delivered') {
+                    $payment = $order->orderPayment()->first();
+                    if (
+                        $payment
+                        && $payment->payment_method === 'COD'
+                        && $payment->payment_status !== 'completed'
+                    ) {
+                        $payment->update([
+                            'payment_status' => 'completed',
+                            'paid_at' => now(),
+                        ]);
+                    }
+                }
+
+                $note = $data['note'] ?: ('Admin đổi trạng thái: ' . auth()->user()->name);
+                if ($data['status'] === 'processing' && empty($data['note'])) {
+                    $note = 'Đã kiểm tra tồn kho và xác nhận đơn — ' . auth()->user()->name;
+                }
+
+                OrderStatusLogs::create([
+                    'order_id' => $order->id,
+                    'old_status' => $old,
+                    'new_status' => $data['status'],
+                    'note' => $note,
+                ]);
+            });
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->implode(' '));
+        }
+
+        $order->refresh()->loadMissing('user');
+        try {
+            if ($order->user?->email) {
+                Mail::to($order->user->email)->send(
+                    new OrderStatusUpdatedMail($order, $oldStatus, $data['status'])
+                );
             }
-
-            $order->update(['status' => $data['status']]);
-
-            OrderStatusLogs::create([
-                'order_id' => $order->id,
-                'old_status' => $old,
-                'new_status' => $data['status'],
-                'note' => $data['note'] ?: ('Admin đổi trạng thái: ' . auth()->user()->name),
-            ]);
-        });
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return back()->with('success', 'Đã cập nhật trạng thái đơn hàng.');
+    }
+
+
+    private function assertStockEnoughToConfirm(Order $order): void
+    {
+        $order->load('orderItems.product');
+        $errors = [];
+
+        foreach ($order->orderItems as $item) {
+            $product = $item->product;
+
+            if (!$product) {
+                $errors[] = "Sản phẩm \"{$item->product_name}\" không còn trong hệ thống.";
+                continue;
+            }
+
+            // if (isset($product->is_active) && !$product->is_active) {
+            //     $errors[] = "Sản phẩm \"{$product->name}\" đang ngừng kinh doanh.";
+            // }
+
+            $available = (int) $product->quantity + (int) $item->quantity;
+            if ($available < (int) $item->quantity) {
+                $errors[] = "Sản phẩm \"{$product->name}\" không đủ hàng (cần {$item->quantity}, khả dụng {$available}).";
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages([
+                'status' => $errors,
+            ]);
+        }
     }
 }

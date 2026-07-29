@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Clients;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderConfirmationMail;
+use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\OrderStatusLogs;
+use App\Models\Product;
 use App\Models\UserAddress;
 use App\Services\ClientCart;
 use App\Services\CouponService;
@@ -16,13 +19,11 @@ use App\Services\VnPayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Thanh toán — user đã đăng nhập.
- * Có: địa chỉ, coupon, loại giao hàng (thường/nhanh), khung giờ.
- */
+
 class CheckoutController extends Controller
 {
     public function index()
@@ -31,6 +32,13 @@ class CheckoutController extends Controller
         ClientCart::mergeSessionToUser($user);
 
         $cartItems = ClientCart::items();
+        foreach($cartItems as $item){
+            if($item->product && $item->product->is_active == false){
+                ClientCart::remove($item->product->id);
+                return redirect()->route('cart')->with('error', 'Sản phẩm: '.$item->product->name.' không còn được bán.');
+            }
+        }
+        
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart')->with('warning', 'Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
         }
@@ -44,6 +52,15 @@ class CheckoutController extends Controller
         $defaultDeliveryDay = $slotGroups['today']['available'] ? 'today' : 'tomorrow';
         $cutoffHour = DeliveryService::CUTOFF_HOUR;
 
+        $activeCoupons = Coupon::withCount('usages')
+            ->where('start_date', '<=', today())
+            ->where('end_date', '>=', today())
+            ->get()
+            ->filter(function($coupon) {
+                if ($coupon->usage_limit !== null && $coupon->usages_count >= $coupon->usage_limit) return false;
+                return true;
+            });
+
         return view('clients.pages.checkout', compact(
             'cartItems',
             'subtotal',
@@ -53,11 +70,11 @@ class CheckoutController extends Controller
             'defaultShipping',
             'slotGroups',
             'defaultDeliveryDay',
-            'cutoffHour'
+            'cutoffHour',
+            'activeCoupons'
         ));
     }
 
-    /** AJAX kiểm tra mã giảm giá */
     public function applyCoupon(Request $request)
     {
         $request->validate(['code' => 'required|string|max:50']);
@@ -99,7 +116,7 @@ class CheckoutController extends Controller
 
         $availableSlots = array_keys(DeliveryService::availableFreshSlots());
 
-        // Hàng tươi: luôn giao theo khung giờ (shipping_type = standard)
+        // (shipping_type = standard)
         if ($deliveryOptions['requires_slot'] && !$request->filled('shipping_type')) {
             $request->merge(['shipping_type' => 'standard']);
         }
@@ -137,7 +154,7 @@ class CheckoutController extends Controller
             'ward.required_if' => 'Vui lòng chọn Phường/Xã.',
         ]);
 
-        // Validate địa chỉ đã lưu thuộc về user
+        // địa chỉ đã lưu thuộc về user
         if ($request->address_type === 'saved') {
             $owned = UserAddress::where('user_id', $user->id)->where('id', $request->saved_address_id)->exists();
             if (!$owned) {
@@ -218,7 +235,7 @@ class CheckoutController extends Controller
         ) {
             $order = Order::create([
                 'user_id' => $user->id,
-                'order_code' => 'XO' . now()->format('ymdHis') . $user->id,
+                'order_code' => 'OR' . now()->format('ymdHis') . $user->id,
                 'subtotal' => $subtotal,
                 'discount_amount' => (string) $discountAmount,
                 'coupon_code' => $couponCode,
@@ -281,16 +298,32 @@ class CheckoutController extends Controller
             return $order;
         });
 
-        // VNPay → chuyển sang cổng thanh toán
+        // VNPay 
         if ($request->payment_method === 'vnpay') {
             $payUrl = VnPayService::createPaymentUrl($order, $request->ip() ?? '127.0.0.1');
 
             return redirect()->away($payUrl);
         }
 
+        // COD
+        $this->sendOrderConfirmation($order);
+
         return redirect()
             ->route('checkout.success', $order)
             ->with('success', 'Đặt hàng thành công!');
+    }
+
+    private function sendOrderConfirmation(Order $order): void
+    {
+        try {
+            $order->loadMissing(['orderItems', 'orderPayment', 'user']);
+            $email = $order->user?->email;
+            if ($email) {
+                Mail::to($email)->send(new OrderConfirmationMail($order));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function success(Order $order)

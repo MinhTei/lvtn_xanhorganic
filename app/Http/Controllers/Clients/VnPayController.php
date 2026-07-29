@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Clients;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Models\OrderStatusLogs;
 use App\Services\ClientCart;
@@ -11,12 +12,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class VnPayController extends Controller
 {
-    /**
-     * Return URL — VNPay chuyển khách về sau khi thanh toán.
-     */
+    
     public function return(Request $request)
     {
         $verified = VnPayService::verifyCallback($request);
@@ -35,7 +35,7 @@ class VnPayController extends Controller
                 ->with('error', 'Không tìm thấy đơn hàng '.$verified['txn_ref']);
         }
 
-        // Chỉ chủ đơn mới xem (nếu đang login)
+        // Chỉ chủ đơn mới xem 
         if (Auth::check() && $order->user_id !== Auth::id()) {
             abort(403);
         }
@@ -134,10 +134,20 @@ class VnPayController extends Controller
                     'note' => 'Thanh toán VNPay thành công. Mã GD: '.($verified['transaction_no'] ?? '—'),
                 ]);
 
+                // Gửi mail 
+                try {
+                    $order->loadMissing(['orderItems', 'orderPayment', 'user']);
+                    if ($order->user?->email) {
+                        Mail::to($order->user->email)->send(new OrderConfirmationMail($order));
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+
                 return;
             }
 
-            // Hủy / thất bại VNPay → hủy đơn + hoàn kho + trả SP về giỏ
+            // Hủy trả SP về giỏ
             $reason = 'VNPay thất bại / hủy. Mã: '.($verified['response_code'] ?? '—');
 
             if ($order->canTransitionTo('cancelled')) {

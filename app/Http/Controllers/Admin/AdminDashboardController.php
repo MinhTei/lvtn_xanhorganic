@@ -5,15 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Dashboard: thống kê + biểu đồ theo khoảng thời gian + xuất báo cáo CSV.
- */
+
 class AdminDashboardController extends Controller
 {
     public function index(Request $request)
@@ -28,9 +27,7 @@ class AdminDashboardController extends Controller
         ]));
     }
 
-    /**
-     * Xuất báo cáo CSV theo cùng bộ lọc thời gian với dashboard.
-     */
+   
     public function export(Request $request): StreamedResponse
     {
         [$from, $to, $range] = $this->resolveDateRange($request);
@@ -53,7 +50,7 @@ class AdminDashboardController extends Controller
             fputcsv($out, ['Chỉ số', 'Giá trị']);
             fputcsv($out, ['Tổng doanh thu (không tính hủy)', number_format($data['stats']['revenue'], 0, ',', '.').' VND']);
             fputcsv($out, ['Số đơn hàng', $data['stats']['orders']]);
-            fputcsv($out, ['Tổng sản phẩm trong kho', $data['stats']['products']]);
+            fputcsv($out, ['Tổng người dùng', $data['stats']['users']]);
             fputcsv($out, []);
 
             fputcsv($out, ['PHÂN BỐ TRẠNG THÁI ĐƠN']);
@@ -101,23 +98,34 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public function exportPdf(Request $request)
+    {
+        [$from, $to, $range] = $this->resolveDateRange($request);
+        $data = $this->buildReportData($from, $to);
+
+        $pdf = Pdf::loadView('admin.dashboard.export_pdf', array_merge($data, [
+            'from' => $from,
+            'to' => $to,
+            'range' => $range,
+        ]))->setPaper('a4', 'portrait');
+
+        $filename = 'bao-cao-dashboard_'.$from->format('Ymd').'_'.$to->format('Ymd').'.pdf';
+
+        return $pdf->download($filename);
+    }
+
     /** @return array{0:Carbon,1:Carbon,2:string} */
     private function resolveDateRange(Request $request): array
     {
-        $range = $request->get('range', '30');
         $today = Carbon::today();
+        $from = Carbon::parse($request->get('from', $today->copy()->startOfMonth()->format('Y-m-d')))->startOfDay();
+        $to = Carbon::parse($request->get('to', $today->format('Y-m-d')))->startOfDay();
 
-        return match ($range) {
-            'today' => [$today->copy(), $today->copy(), 'today'],
-            '7' => [$today->copy()->subDays(6), $today->copy(), '7'],
-            'month' => [$today->copy()->startOfMonth(), $today->copy(), 'month'],
-            'custom' => [
-                Carbon::parse($request->get('from', $today->copy()->subDays(29)->format('Y-m-d')))->startOfDay(),
-                Carbon::parse($request->get('to', $today->format('Y-m-d')))->startOfDay(),
-                'custom',
-            ],
-            default => [$today->copy()->subDays(29), $today->copy(), '30'],
-        };
+        if ($from->gt($to)) {
+            [$from, $to] = [$to->copy(), $from->copy()];
+        }
+
+        return [$from, $to, 'custom'];
     }
 
     private function buildReportData(Carbon $from, Carbon $to): array
@@ -132,7 +140,7 @@ class AdminDashboardController extends Controller
             ->where('status', '!=', 'cancelled')
             ->sum('total_amount');
 
-        $productCount = Product::count();
+        $userCount = User::count();
 
         $statusCounts = (clone $ordersQuery)
             ->select('status', DB::raw('COUNT(*) as total'))
@@ -155,12 +163,37 @@ class AdminDashboardController extends Controller
 
         $revenueLabels = [];
         $revenueData = [];
-        $cursor = $from->copy();
-        while ($cursor->lte($to)) {
-            $key = $cursor->format('Y-m-d');
-            $revenueLabels[] = $cursor->format('d/m');
-            $revenueData[] = (float) ($revenueByDay[$key]->total ?? 0);
-            $cursor->addDay();
+        $daySpan = $from->diffInDays($to) + 1;
+
+        // Khoảng dài (theo năm) → gom theo tháng cho biểu đồ dễ đọc
+        if ($daySpan > 62) {
+            $revenueByMonth = (clone $ordersQuery)
+                ->where('status', '!=', 'cancelled')
+                ->select(
+                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month_key"),
+                    DB::raw('SUM(total_amount) as total')
+                )
+                ->groupBy(DB::raw("DATE_FORMAT(created_at, '%Y-%m')"))
+                ->orderBy('month_key')
+                ->get()
+                ->keyBy('month_key');
+
+            $cursor = $from->copy()->startOfMonth();
+            $end = $to->copy()->startOfMonth();
+            while ($cursor->lte($end)) {
+                $key = $cursor->format('Y-m');
+                $revenueLabels[] = $cursor->format('m/Y');
+                $revenueData[] = (float) ($revenueByMonth[$key]->total ?? 0);
+                $cursor->addMonth();
+            }
+        } else {
+            $cursor = $from->copy();
+            while ($cursor->lte($to)) {
+                $key = $cursor->format('Y-m-d');
+                $revenueLabels[] = $cursor->format('d/m');
+                $revenueData[] = (float) ($revenueByDay[$key]->total ?? 0);
+                $cursor->addDay();
+            }
         }
 
         $topProducts = OrderItem::query()
@@ -187,7 +220,7 @@ class AdminDashboardController extends Controller
             'stats' => [
                 'revenue' => $revenue,
                 'orders' => $orderCount,
-                'products' => $productCount,
+                'users' => $userCount,
             ],
             'statusChart' => $statusChart,
             'revenueChart' => [
@@ -204,7 +237,7 @@ class AdminDashboardController extends Controller
     {
         return match ($status) {
             'pending' => 'Chờ xác nhận',
-            'processing' => 'Đang xử lý',
+            'processing' => 'Đã xác nhận',
             'shipped' => 'Đang giao',
             'delivered' => 'Đã giao',
             'cancelled' => 'Đã hủy',

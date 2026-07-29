@@ -25,7 +25,6 @@ class AdminReviewController extends Controller
         return view('admin.reviews.index', compact('reviews'));
     }
 
-    /** Bật / ẩn đánh giá trên site */
     public function toggle(ProductReview $review)
     {
         $review->update(['is_visible' => !$review->is_visible]);

@@ -50,6 +50,7 @@
                             <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
                             <td>
                                 <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="btn btn-sm btn-outline-secondary">In HĐ</a>
                             </td>
                         </tr>
                     @empty

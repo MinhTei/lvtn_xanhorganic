@@ -10,7 +10,7 @@ class User extends Authenticatable
 {
     use Notifiable;
     use HasFactory;
-    protected $fillable=['name','email','phone','password','status','role_id','activation_token'];
+    protected $fillable=['name','email','phone','password','remember_token','status','role_id','activation_token'];
 
     public function role(){
         return $this->belongsTo(Role::class,'role_id');

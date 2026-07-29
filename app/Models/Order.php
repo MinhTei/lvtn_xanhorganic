@@ -57,7 +57,7 @@ class Order extends Model
 
     public const STATUS_LABELS = [
         'pending' => 'Chờ xác nhận',
-        'processing' => 'Đang xử lý',
+        'processing' => 'Đã xác nhận',
         'shipped' => 'Đang giao',
         'delivered' => 'Đã giao',
         'cancelled' => 'Đã hủy',

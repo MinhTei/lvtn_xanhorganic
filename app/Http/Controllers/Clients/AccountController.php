@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatusLogs;
 use App\Models\ProductReview;
+use App\Services\ClientWishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -19,6 +20,7 @@ class AccountController extends Controller
     {
         $orders = Order::where('user_id', Auth::id())->latest()->get();
         $addresses = Auth::user()->addresses ?? collect();
+        $wishlistItems = ClientWishlist::items();
         $statusLabels = Order::STATUS_LABELS;
         $statusColors = [
             'pending' => '#f59e0b',
@@ -31,6 +33,7 @@ class AccountController extends Controller
         return view('clients.pages.account', compact(
             'addresses',
             'orders',
+            'wishlistItems',
             'statusLabels',
             'statusColors'
         ));
@@ -105,12 +108,10 @@ class AccountController extends Controller
     {
         $data = $this->validateAddress($request);
 
-        // Nếu chọn mặc định -> bỏ mặc định tất cả địa chỉ khác
         if ($data['is_default']) {
             UserAddress::where('user_id', Auth::id())->update(['is_default' => false]);
         }
 
-        // Nếu chưa có địa chỉ nào -> tự động đặt làm mặc định
         if (!$data['is_default'] && UserAddress::where('user_id', Auth::id())->count() === 0) {
             $data['is_default'] = true;
         }
@@ -126,7 +127,7 @@ class AccountController extends Controller
 
         $data = $this->validateAddress($request);
 
-        // Nếu chọn mặc định -> bỏ mặc định tất cả địa chỉ khác
+        // bỏ mặc định tất cả địa chỉ khác
         if ($data['is_default']) {
             UserAddress::where('user_id', Auth::id())
                 ->where('id', '!=', $address->id)
@@ -157,7 +158,6 @@ class AccountController extends Controller
         return back()->with('success', 'Đã đặt làm địa chỉ mặc định.');
     }
 
-    // Hàm dùng chung để validate form địa chỉ
     private function validateAddress(Request $request): array
     {
         $validated = $request->validate([
@@ -269,33 +269,5 @@ class AccountController extends Controller
         ]);
 
         return back()->with('reviewSuccess', 'Cảm ơn bạn đã đánh giá sản phẩm!');
-    }
-
-    public function updateReview(Request $request, Order $order, ProductReview $review)
-    {
-        abort_unless($order->user_id === Auth::id(), 403);
-        abort_unless($review->order_id === $order->id && $review->user_id === Auth::id(), 403);
-
-        $data = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-        ]);
-
-        $review->update([
-            'rating' => $data['rating'],
-            'comment' => $data['comment'] ?? null,
-        ]);
-
-        return back()->with('reviewSuccess', 'Đã cập nhật đánh giá.');
-    }
-
-    public function destroyReview(Order $order, ProductReview $review)
-    {
-        abort_unless($order->user_id === Auth::id(), 403);
-        abort_unless($review->order_id === $order->id && $review->user_id === Auth::id(), 403);
-
-        $review->delete();
-
-        return back()->with('reviewSuccess', 'Đã xóa đánh giá.');
     }
 }

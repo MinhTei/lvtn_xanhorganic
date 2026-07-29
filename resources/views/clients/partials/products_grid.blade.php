@@ -1,22 +1,19 @@
-{{-- Grid danh sách sản phẩm --}}
 @forelse ($products as $product)
-    <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-        <div class="product-card-container">
-            <div class="product-card-image">
+    <div class="col-6 col-md-6 col-lg-4 mb-4">
+        <div class="product-card">
+            <div class="thumb">
                 <a href="{{ route('product.detail', $product->slug) }}">
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
                 </a>
             </div>
-            <div class="product-card-body">
+            <div class="body">
                 <h6>
-                    <a href="{{ route('product.detail', $product->slug) }}" class="product-name">
-                        {{ $product->name }}
-                    </a>
+                    <a href="{{ route('product.detail', $product->slug) }}">{{ $product->name }}</a>
                 </h6>
-                <div class="product-price">
+                <div class="price">
                     {{ number_format($product->sale_price ?? $product->price, 0, ',', '.') }}₫
                     @if ($product->sale_price && $product->sale_price < $product->price)
-                        <span class="original-price">{{ number_format($product->price, 0, ',', '.') }}₫</span>
+                        <span class="old">{{ number_format($product->price, 0, ',', '.') }}₫</span>
                     @endif
                 </div>
                 @include('clients.partials.product_actions', ['product' => $product])
