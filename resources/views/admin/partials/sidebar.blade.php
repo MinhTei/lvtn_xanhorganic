@@ -4,7 +4,7 @@
         ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'fa-dashboard', 'match' => 'admin.dashboard', 'perm' => null],
         ['route' => 'admin.orders.index', 'label' => 'Đơn hàng', 'icon' => 'fa-shopping-cart', 'match' => 'admin.orders.*', 'perm' => 'manage_orders'],
         ['route' => 'admin.products.index', 'label' => 'Sản phẩm', 'icon' => 'fa-cube', 'match' => 'admin.products.*', 'perm' => 'manage_products'],
-        ['route' => 'admin.categories.index', 'label' => 'Danh mục', 'icon' => 'fa-list', 'match' => 'admin.categories.*', 'perm' => 'manage_categories'],
+        //['route' => 'admin.categories.index', 'label' => 'Danh mục', 'icon' => 'fa-list', 'match' => 'admin.categories.*', 'perm' => 'manage_categories'],
         ['route' => 'admin.users.index', 'label' => 'Người dùng', 'icon' => 'fa-users', 'match' => 'admin.users.*', 'perm' => 'manage_users'],
         ['route' => 'admin.roles.index', 'label' => 'Role & Quyền', 'icon' => 'fa-key', 'match' => 'admin.roles.*', 'perm' => 'manage_users'],
         ['route' => 'admin.coupons.index', 'label' => 'Mã giảm giá', 'icon' => 'fa-ticket', 'match' => 'admin.coupons.*', 'perm' => 'manage_coupons'],
