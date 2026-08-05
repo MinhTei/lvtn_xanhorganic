@@ -144,8 +144,9 @@ class AdminOrderController extends Controller
 
         $order->refresh()->loadMissing('user');
         try {
-            if ($order->user?->email) {
-                Mail::to($order->user->email)->send(
+            $email = $order->shipping_email ?: $order->user?->email;
+            if ($email) {
+                Mail::to($email)->send(
                     new OrderStatusUpdatedMail($order, $oldStatus, $data['status'])
                 );
             }

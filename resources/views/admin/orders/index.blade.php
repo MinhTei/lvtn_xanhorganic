@@ -30,6 +30,7 @@
                         <th>Mã đơn</th>
                         <th>Khách</th>
                         <th>Người nhận</th>
+                        <th>Thanh toán</th>
                         <th>Tổng tiền</th>
                         <th>Trạng thái</th>
                         <th>Ngày đặt</th>
@@ -44,6 +45,12 @@
                             <td>
                                 {{ $order->shipping_name }}
                                 <div class="small text-muted">{{ $order->shipping_phone }}</div>
+                                <div class="small text-muted">{{ $order->shipping_email }}</div>
+
+                            </td>
+                            <td>
+                                {{ $order->orderPayment->payment_method }}
+
                             </td>
                             <td>{{ number_format($order->total_amount, 0, ',', '.') }}₫</td>
                             <td><span class="badge text-bg-secondary">{{ $statusLabels[$order->status] ?? $order->status }}</span></td>

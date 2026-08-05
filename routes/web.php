@@ -10,17 +10,26 @@ use App\Http\Controllers\Clients\ForgotPasswordController;
 use App\Http\Controllers\Clients\HomeController;
 use App\Http\Controllers\Clients\ProductController;
 use App\Http\Controllers\Clients\ProductDetailController;
+use App\Http\Controllers\Clients\PromoController;
+use App\Http\Controllers\Clients\RecipeController;
 use App\Http\Controllers\Clients\ResetPasswordController;
 use App\Http\Controllers\Clients\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 
 
-Route::get('/', fn () => redirect()->route('home'));
+Route::get('/', fn() => redirect()->route('home'));
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.post');
+
+Route::get('/promos', [PromoController::class, 'index'])->name('promos');
+
+Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes');
+Route::get('/recipes/{id}', [RecipeController::class, 'show'])->name('recipes.show');
+Route::post('/recipes/{id}/add-all-to-cart', [RecipeController::class, 'addAllToCart'])->name('recipes.addAllToCart');
+
 
 Route::get('/about', function () {
     return view('clients.pages.about');

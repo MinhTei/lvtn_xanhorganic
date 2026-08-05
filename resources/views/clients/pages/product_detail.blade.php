@@ -19,6 +19,7 @@
 
                         @if ($product->images->count() > 1)
                             <div class="product__details__pic__slider__placeholder">
+                                
                                 @foreach ($product->images as $index => $image)
                                     <button type="button"
                                             class="pt product-thumb {{ $index === 0 ? 'active' : '' }}"
@@ -48,8 +49,10 @@
                             {{ number_format($displayPrice, 0, ',', '.') }}₫
                             @if ($product->sale_price && $product->sale_price < $product->price)
                                 <span class="original-price">{{ number_format($product->price, 0, ',', '.') }}₫</span>
+                                <span class="label-sale-detail">-{{$product->getLabelPriceSale()}}%</span>
                             @endif
                         </div>
+                        
 
                         <div class="product__details__quantity">
                             <div class="quantity">

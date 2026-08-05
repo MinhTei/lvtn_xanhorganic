@@ -1,10 +1,13 @@
 @forelse ($products as $product)
-    <div class="col-6 col-md-6 col-lg-4 mb-4">
+    <div class="col-6 col-md-4 col-lg-3 mb-4">
         <div class="product-card">
-            <div class="thumb">
+            <div class="thumb position-relative">
                 <a href="{{ route('product.detail', $product->slug) }}">
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
                 </a>
+                @if($product->sale_price)
+                <span class="label-sale">-{{$product->getLabelPriceSale()}}%</span>
+                @endif
             </div>
             <div class="body">
                 <h6>
@@ -12,6 +15,9 @@
                 </h6>
                 <div class="price">
                     {{ number_format($product->sale_price ?? $product->price, 0, ',', '.') }}₫
+                    @if($product->unit)
+                        <span style="font-size: 13px; font-weight: normal; color: #777;">/ {{ $product->unit }}</span>
+                    @endif
                     @if ($product->sale_price && $product->sale_price < $product->price)
                         <span class="old">{{ number_format($product->price, 0, ',', '.') }}₫</span>
                     @endif

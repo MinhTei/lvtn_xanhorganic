@@ -20,7 +20,7 @@
                 </div>
                 <div class="row mb-2">
                     <div class="col-sm-4 text-muted">Người nhận</div>
-                    <div class="col-sm-8">{{ $order->shipping_name }} — {{ $order->shipping_phone }}</div>
+                    <div class="col-sm-8">{{ $order->shipping_name }} - {{ $order->shipping_phone }} - {{ $order->shipping_email }}</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-sm-4 text-muted">Địa chỉ</div>
@@ -58,7 +58,7 @@
                             Giao hàng thường (3–5 ngày)
                         @endif
                         @if($order->delivery_slot)
-                            · {{ \App\Services\DeliveryService::labelForSlot($order->delivery_slot) }}
+                            {{ \App\Services\DeliveryService::labelForSlot($order->delivery_slot) }}
                         @endif
                     </div>
                 </div>
@@ -80,13 +80,12 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header bg-white">Sản phẩm</div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>SP</th>
-                            <th>SL</th>
+                            <th>Sản Phẩm</th>
+                            <th>Số Lượng</th>
                             <th>Đơn giá</th>
                             <th>Thành tiền</th>
                         </tr>
@@ -119,7 +118,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <!-- <div class="card">
             <div class="card-header bg-white">Lịch sử trạng thái</div>
             <ul class="list-group list-group-flush">
                 @forelse($order->orderStatusLogs->sortByDesc('id') as $log)
@@ -136,11 +135,11 @@
                     <li class="list-group-item text-muted">Chưa có lịch sử.</li>
                 @endforelse
             </ul>
-        </div>
+        </div> -->
     </div>
 
     <div class="col-lg-4">
-        <div class="card mb-3">
+        <!-- <div class="card mb-3">
             <div class="card-header bg-white">Luồng trạng thái</div>
             <div class="card-body small">
                 <ol class="mb-2 ps-3">
@@ -151,7 +150,7 @@
                 </ol>
                 <div class="text-muted">Hủy chỉ khi đang <em>Chờ xác nhận</em> hoặc <em>Đã xác nhận</em>. Không nhảy bước / không quay ngược.</div>
             </div>
-        </div>
+        </div> -->
 
         <div class="card">
             <div class="card-header bg-white">Cập nhật trạng thái</div>
@@ -176,10 +175,10 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label class="form-label">Ghi chú</label>
                             <textarea name="note" class="form-control" rows="2" placeholder="Tùy chọn"></textarea>
-                        </div>
+                        </div> -->
                         <button type="submit" class="btn btn-primary w-100">Lưu trạng thái</button>
                     </form>
                 @endif

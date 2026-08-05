@@ -196,6 +196,8 @@ body {
 
 .header__menu {
     padding: 10px 0;
+    display: flex;
+    justify-content: center;
     text-align: center;
 }
 
@@ -3649,4 +3651,29 @@ select.native-address-select,
         line-height: 30px;
         font-size: 18px;
     }
+}
+
+/* Custom Sale Label */
+.label-sale {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #dd2222;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.label-sale-detail {
+    position: relative;
+    background-color: #ea5353;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 10;
 }

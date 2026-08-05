@@ -13,42 +13,46 @@ class ProductController extends Controller
     {
 
         $categories = Category::where('parent_id', null)->with('children')->get();
-        
+
         $query = Product::with('images')->where('is_active', 1);
 
         if ($request->filled('q')) {
-            $q = trim($request->q);
+            $q = mb_strtolower(trim($request->q), 'UTF-8');
             $query->where(function ($builder) use ($q) {
-                $builder->where('name', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%")
-                    ->orWhere('slug', 'like', "%{$q}%");
+                $builder->whereRaw('LOWER(name) LIKE ?', ["%{$q}%"])
+                    ->orWhereRaw('LOWER(slug) COLLATE utf8mb4_vi_0900_as_cs LIKE ?', ["%{$q}%"]);
             });
         }
 
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $categoryId = $request->category_id;
+            $childIds = Category::where('parent_id', $categoryId)->pluck('id')->toArray();
+            $allCategoryIds = array_merge([$categoryId], $childIds);
+
+            $query->whereIn('category_id', $allCategoryIds);
         }
-        
+
 
 
 
         $min = $request->input('minPrice', $request->input('min_price'));
         $max = $request->input('maxPrice', $request->input('max_price'));
+
         if ($min !== null && $min !== '') {
-            $query->where('price', '>=', $min);
+            $query->whereRaw('COALESCE(sale_price, price) >= ?', [$min]);
         }
         if ($max !== null && $max !== '') {
-            $query->where('price', '<=', $max);
+            $query->whereRaw('COALESCE(sale_price, price) <= ?', [$max]);
         }
 
         match ($request->sort) {
-            'price_asc'  => $query->orderBy('price', 'asc'),
-            'price_desc' => $query->orderBy('price', 'desc'),
-            default      => $query->latest('id'), 
+            'price_asc' => $query->orderByRaw('COALESCE(sale_price, price) asc'),
+            'price_desc' => $query->orderByRaw('COALESCE(sale_price, price) desc'),
+            default => $query->latest('id'),
         };
 
-        $products = $query->paginate(6)->withQueryString();
+        $products = $query->paginate(8)->withQueryString();
 
         return view('clients.pages.products', compact('categories', 'products'));
     }

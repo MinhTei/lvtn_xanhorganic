@@ -86,11 +86,13 @@
                     </div>
                 </div>
             </div>
-            <div class="row featured__filter">
-                @include('clients.partials.products_grid', ['products' => $products])
-            </div>
-            <div class="d-flex justify-content-center">
-                {{ $products->links() }}
+            <div id="product-list-area">
+                <div class="row featured__filter">
+                    @include('clients.partials.products_grid', ['products' => $products])
+                </div>
+                <div class="d-flex justify-content-center">
+                    {{ $products->links() }}
+                </div>
             </div>
         </div>
     </section>
@@ -102,14 +104,14 @@
             <div class="row">
                 <div class="col-lg-6 col-md-6 col-sm-6">
                     <div class="banner__pic">
-                        <img src="{{asset('assets/clients/img/banner/banner-1.jpg')}}" alt="">
-                        {{-- <a href="{{route('products')}}" class="primary-btn">MUA NGAY</a> --}}
+                        <a href="{{route('recipes')}}"><img src="{{asset('assets/clients/img/banner/banner-1.jpg')}}" alt=""></a>
+                        <!-- <a href="{{route('promos')}}" class="primary-btn">MUA NGAY</a> -->
                     </div>
                 </div>
                 <div class="col-lg-6 col-md-6 col-sm-6">
                     <div class="banner__pic">
-                        <img src="{{asset('assets/clients/img/banner/banner-2.jpg')}}" alt="">
-                        {{-- <a href="{{route('products')}}" class="primary-btn">MUA NGAY</a> --}}
+                        <a href="{{route('promos')}}"><img src="{{asset('assets/clients/img/banner/banner-2.jpg')}}" alt=""></a>
+                        <!-- <a href="{{route('promos')}}" class="primary-btn" style="display: flex;padding-left: 250px">MUA NGAY</a> -->
                     </div>
                 </div>
             </div>
@@ -129,16 +131,19 @@
                                 <div class="latest-product__slider__item">
                                     @foreach($chunk as $product)
                                         <div class="latest-product__item">
-                                            <div class="latest-product__item__pic">
+                                            <div class="latest-product__item__pic position-relative">
                                                 <a href="{{route('product.detail', $product->slug)}}">
                                                     <img src="{{ $product->image_url ?? asset('assets/clients/img/product/' . ($product->slug ?? '') . '.jpg') }}" alt="{{ $product->name }}">
                                                 </a>
+                                                @if($product->getLabelPriceSale() > 0)
+                                                    <span class="label-sale">-{{ $product->getLabelPriceSale() }}%</span>
+                                                @endif
                                             </div>
                                             <div class="latest-product__item__text">
                                                 <a href="{{route('product.detail', $product->slug)}}">
                                                     <h6>{{$product->name}}</h6>
                                                 </a>
-                                                <span>{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
+                                                <span>{{ number_format($product->sale_price??$product->price, 0, ',', '.') }} VNĐ</span>
                                             </div>
                                         </div>
                                     @endforeach
@@ -155,16 +160,19 @@
                                 <div class="latest-product__slider__item">
                                     @foreach($chunk as $product)
                                         <div class="latest-product__item">
-                                            <div class="latest-product__item__pic">
+                                            <div class="latest-product__item__pic position-relative">
                                                 <a href="{{route('product.detail', $product->slug)}}">
                                                     <img src="{{ $product->image_url ?? asset('assets/clients/img/product/' . ($product->slug ?? '') . '.jpg') }}" alt="{{$product->name}}">
                                                 </a>
+                                                @if($product->getLabelPriceSale() > 0)
+                                                    <span class="label-sale">-{{ $product->getLabelPriceSale() }}%</span>
+                                                @endif
                                             </div>
                                             <div class="latest-product__item__text">
                                                 <a href="{{route('product.detail', $product->slug)}}">
                                                     <h6>{{$product->name}}</h6>
                                                 </a>
-                                                <span>{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
+                                                <span>{{ number_format($product->sale_price??$product->price, 0, ',', '.') }} VNĐ</span>
                                             </div>
                                         </div>
                                     @endforeach

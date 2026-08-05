@@ -29,6 +29,11 @@
                 @endforeach
             </select>
         </div>
+        <div class="form-group">
+            <label>Thời hạn sử dụng(ngày)</label>
+            <input type="number" name ="shelf_days" class = "form-control" min ="1" value ="{{ old('shelf_days',$category->shelf_days?? '') }}" placeholder="vd:3" required/>
+            <small class = "text_muted">Dùng để chạy flashsale cho sản phẩm cận date</small>
+        </div>
         <div class="form-check mb-3">
             <input type="hidden" name="is_active" value="0">
             <input type="checkbox" name="is_active" value="1" class="form-check-input" id="cat_active"

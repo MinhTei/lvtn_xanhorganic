@@ -73,6 +73,13 @@
                                                placeholder="10–12 chữ số" autocomplete="tel" pattern="[0-9]{10,12}">
                                     </div>
                                 </div>
+                                <div class="col-lg-6">
+                                    <div class="checkout__input">
+                                        <p>Địa chỉ email <span>*</span></p>
+                                        <input type="email" name="email" value="{{ old('email') }}"
+                                               placeholder="Nhập địa chỉ email" autocomplete="email">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="checkout__input">

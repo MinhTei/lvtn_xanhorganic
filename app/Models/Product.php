@@ -10,9 +10,13 @@ class Product extends Model
     use HasFactory;
     protected $fillable = [
         'category_id', 'name', 'slug', 'description', 'price', 'sale_price',
-        'quantity', 'unit', 'is_featured', 'is_active', 'delivery_mode',
+        'quantity', 'unit', 'is_featured', 'is_active', 'delivery_mode', 'manufacture_date', 'expiry_date',
     ];
 
+    protected $casts = [
+        'manufacture_date' => 'date',
+        'expiry_date' => 'date',
+    ];
     /** SP có hỗ trợ giao thường không */
     public function supportsStandardDelivery(): bool
     {
@@ -68,5 +72,17 @@ class Product extends Model
         }
 
         return asset('assets/clients/img/product/' . $this->slug . '.jpg');
+    }
+    public function getLabelPriceSale():int{
+        if($this->sale_price && $this->price > 0 && $this->sale_price < $this->price){
+            return (int) round((($this->price-$this->sale_price)/$this->price) * 100);
+        }
+        return 0;
+
+    }
+
+    public function recipes()
+    {
+        return $this->belongsToMany(Recipe::class, 'product_recipe', 'product_id', 'recipe_id');
     }
 }

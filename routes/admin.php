@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminRecipeController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminRoleController;
 use App\Http\Controllers\Admin\AdminUserController;
@@ -60,6 +61,12 @@ Route::middleware(['admin'])->group(function () {
             ->except(['show'])
             ->names('admin.categories');
     });
+
+    Route::middleware(('permission:manage_recipes'))->group(function () {
+        Route::resource('recipes', AdminRecipeController::class)
+            ->names('admin.recipes');
+    });
+
 
     Route::middleware('permission:manage_users')->group(function () {
         Route::patch('users/{user}/toggle-block', [AdminUserController::class, 'toggleBlock'])

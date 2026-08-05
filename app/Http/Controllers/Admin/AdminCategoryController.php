@@ -34,6 +34,7 @@ class AdminCategoryController extends Controller
             'name'=>'required|string|max:255|unique:categories,name',
             'parent_id'=>'nullable|exists:categories,id',
             'is_active'=>'nullable|boolean',
+            'shelf_days'=>'nullable|integer|min:1',
         ],[
             'name.required'=>'Vui lòng nhập tên dnah mục',
             'name.unique'=>'Tên danh mục đã tồn tại',
@@ -68,6 +69,7 @@ class AdminCategoryController extends Controller
             'name'=>'required|string|max:255|unique:categories,name,'.$category->id,
             'parent_id'=>'nullable|exists:categories,id',
             'is_active'=>'nullable|boolean',
+            'shelf_days'=>'nullable|integer|min:1',
         ],[
             'name.required'=>'Vui lòng nhập tên dnah mục',
             'name.unique'=>'Tên danh mục đã tồn tại',

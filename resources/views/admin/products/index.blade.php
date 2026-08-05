@@ -35,8 +35,10 @@
                     <th>Tên</th>
                     <th>Danh mục</th>
                     <th>Giá</th>
-                    <th>Kho</th>
-                    <th>TT</th>
+                    <th>Số lượng</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày sản xuất</th>
+                    <th>Ngày hết hạn</th>
                     <th></th>
                 </tr>
             </thead>
@@ -62,6 +64,12 @@
                             @else
                                 <span class="badge-muted">Ẩn</span>
                             @endif
+                        </td>
+                        <td>
+                            {{ $product->manufacture_date?->format('d/m/Y') ?? '' }}
+                        </td>
+                        <td>
+                            {{ $product->expiry_date?->format('d/m/Y') ?? '' }}
                         </td>
                         <td class="text-nowrap">
                             <a href="{{ route('admin.products.edit', $product) }}" class="btn-admin btn-admin-outline btn-sm-admin">Sửa</a>

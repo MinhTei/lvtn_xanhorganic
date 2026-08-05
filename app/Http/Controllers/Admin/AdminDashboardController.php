@@ -27,13 +27,13 @@ class AdminDashboardController extends Controller
         ]));
     }
 
-   
+
     public function export(Request $request): StreamedResponse
     {
         [$from, $to, $range] = $this->resolveDateRange($request);
         $data = $this->buildReportData($from, $to);
 
-        $filename = 'bao-cao-dashboard_'.$from->format('Ymd').'_'.$to->format('Ymd').'.csv';
+        $filename = 'bao-cao-dashboard_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.csv';
 
         return response()->streamDownload(function () use ($from, $to, $range, $data) {
             $out = fopen('php://output', 'w');
@@ -41,14 +41,14 @@ class AdminDashboardController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
 
             fputcsv($out, ['BÁO CÁO DASHBOARD — XANH ORGANIC']);
-            fputcsv($out, ['Khoảng thời gian', $from->format('d/m/Y').' → '.$to->format('d/m/Y')]);
+            fputcsv($out, ['Khoảng thời gian', $from->format('d/m/Y') . ' → ' . $to->format('d/m/Y')]);
             fputcsv($out, ['Loại lọc', $range]);
             fputcsv($out, ['Xuất lúc', now()->format('d/m/Y H:i')]);
             fputcsv($out, []);
 
             fputcsv($out, ['TỔNG QUAN']);
             fputcsv($out, ['Chỉ số', 'Giá trị']);
-            fputcsv($out, ['Tổng doanh thu (không tính hủy)', number_format($data['stats']['revenue'], 0, ',', '.').' VND']);
+            fputcsv($out, ['Tổng doanh thu (không tính hủy)', number_format($data['stats']['revenue'], 0, ',', '.') . ' VND']);
             fputcsv($out, ['Số đơn hàng', $data['stats']['orders']]);
             fputcsv($out, ['Tổng người dùng', $data['stats']['users']]);
             fputcsv($out, []);
@@ -83,7 +83,7 @@ class AdminDashboardController extends Controller
             fputcsv($out, ['Mã đơn', 'Khách hàng', 'Email', 'Trạng thái', 'Tổng tiền', 'Ngày tạo']);
             foreach ($data['exportOrders'] as $order) {
                 fputcsv($out, [
-                    $order->order_code ?? '#'.$order->id,
+                    $order->order_code ?? '#' . $order->id,
                     $order->user?->name ?? 'N/A',
                     $order->user?->email ?? '',
                     $this->statusLabelVi($order->status),
@@ -109,7 +109,7 @@ class AdminDashboardController extends Controller
             'range' => $range,
         ]))->setPaper('a4', 'portrait');
 
-        $filename = 'bao-cao-dashboard_'.$from->format('Ymd').'_'.$to->format('Ymd').'.pdf';
+        $filename = 'bao-cao-dashboard_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -149,8 +149,8 @@ class AdminDashboardController extends Controller
 
         $statusLabels = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         $statusChart = [
-            'labels' => array_map(fn ($s) => $this->statusLabelVi($s), $statusLabels),
-            'data' => array_map(fn ($s) => (int) ($statusCounts[$s] ?? 0), $statusLabels),
+            'labels' => array_map(fn($s) => $this->statusLabelVi($s), $statusLabels),
+            'data' => array_map(fn($s) => (int) ($statusCounts[$s] ?? 0), $statusLabels),
         ];
 
         $revenueByDay = (clone $ordersQuery)
@@ -195,6 +195,8 @@ class AdminDashboardController extends Controller
                 $cursor->addDay();
             }
         }
+
+       
 
         $topProducts = OrderItem::query()
             ->select(

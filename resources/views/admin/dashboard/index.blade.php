@@ -3,17 +3,17 @@
 @section('title', 'Dashboard')
 
 @section('content')
-{{-- Bộ lọc theo khoảng ngày --}}
+<!-- Loc  -->
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-2 align-items-end">
             <div class="col-auto">
                 <label class="form-label small mb-0">Từ ngày</label>
-                <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}" required>
+                <input type="text" id="picker-from" name="from" class="form-control form-control-sm" style="width:130px" placeholder="dd/mm/yyyy" value="{{ $from ?? '' }}" required>
             </div>
             <div class="col-auto">
                 <label class="form-label small mb-0">Đến ngày</label>
-                <input type="date" name="to" class="form-control form-control-sm" value="{{ $to }}" required>
+                <input type="text" id="picker-to" name="to" class="form-control form-control-sm" style="width:130px" placeholder="dd/mm/yyyy" value="{{ $to ?? '' }}" required>
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
@@ -24,14 +24,27 @@
                     Xuất PDF
                 </a>
             </div>
-            <div class="col-auto small text-muted pb-1">
-                {{ \Carbon\Carbon::parse($from)->format('d/m/Y') }} → {{ \Carbon\Carbon::parse($to)->format('d/m/Y') }}
-            </div>
         </form>
     </div>
 </div>
 
-{{-- Thống kê nhanh --}}
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+<script>
+    const fpConfig = {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd/m/Y',
+        locale: 'vn',
+        allowInput: true,
+    };
+    flatpickr('#picker-from', fpConfig);
+    flatpickr('#picker-to', fpConfig);
+</script>
+@endpush
+
+{{-- Thống kê  --}}
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="card h-100">
@@ -89,6 +102,7 @@
             <div class="card-header bg-white">Top 10 sản phẩm bán chạy</div>
             <div class="card-body p-0">
                 <div class="table-responsive">
+                    
                     <table class="table table-sm table-hover mb-0">
                         <thead>
                             <tr>

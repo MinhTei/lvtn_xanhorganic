@@ -133,12 +133,13 @@ class CheckoutController extends Controller
             'coupon_code' => 'nullable|string|max:50',
             'note' => 'nullable|string|max:500',
             'saved_address_id' => 'required_if:address_type,saved|nullable|exists:user_addresses,id',
-            'name' => 'required_if:address_type,new|nullable|string|max:255',
-            'phone' => 'required_if:address_type,new|nullable|regex:/^[0-9]{10,12}$/',
-            'address' => 'required_if:address_type,new|nullable|string|max:255',
+            'name'     => 'required_if:address_type,new|nullable|string|max:255',
+            'phone'    => 'required_if:address_type,new|nullable|regex:/^[0-9]{10,12}$/',
+            'email'    => 'required_if:address_type,new|nullable|email|max:255',
+            'address'  => 'required_if:address_type,new|nullable|string|max:255',
             'province' => 'required_if:address_type,new|nullable|string|max:100',
             'district' => 'required_if:address_type,new|nullable|string|max:100',
-            'ward' => 'required_if:address_type,new|nullable|string|max:100',
+            'ward'     => 'required_if:address_type,new|nullable|string|max:100',
         ], [
             'shipping_type.required' => 'Vui lòng chọn hình thức giao hàng.',
             'shipping_type.in' => 'Hình thức giao hàng không hợp lệ với sản phẩm trong giỏ.',
@@ -146,9 +147,11 @@ class CheckoutController extends Controller
             'delivery_slot.in' => 'Khung giờ đã hết hạn hoặc không hợp lệ. Vui lòng chọn lại.',
             'saved_address_id.required_if' => 'Vui lòng chọn địa chỉ giao hàng.',
             'name.required_if' => 'Vui lòng nhập họ tên người nhận.',
-            'phone.required_if' => 'Vui lòng nhập số điện thoại.',
-            'phone.regex' => 'Số điện thoại không hợp lệ (10–12 số).',
-            'address.required_if' => 'Vui lòng nhập địa chỉ cụ thể.',
+            'phone.required_if'    => 'Vui lòng nhập số điện thoại.',
+            'phone.regex'          => 'Số điện thoại không hợp lệ (10–12 số).',
+            'email.required_if'    => 'Vui lòng nhập địa chỉ email.',
+            'email.email'          => 'Email không đúng định dạng.',
+            'address.required_if'  => 'Vui lòng nhập địa chỉ cụ thể.',
             'province.required_if' => 'Vui lòng chọn Tỉnh/Thành phố.',
             'district.required_if' => 'Vui lòng chọn Quận/Huyện.',
             'ward.required_if' => 'Vui lòng chọn Phường/Xã.',
@@ -163,6 +166,9 @@ class CheckoutController extends Controller
         }
 
         [$shippingName, $shippingPhone, $shippingAddress] = $this->resolveShipping($request, $user);
+
+        // Email nhận xác nhận đơn: lấy từ form nếu địa chỉ mới, ngược lại dùng email tài khoản
+        $shippingEmail = $request->address_type === 'new' ? $request->email : $user->email;
 
         $subtotal = 0;
         foreach ($cartItems as $item) {
@@ -229,13 +235,14 @@ class CheckoutController extends Controller
             $totalAmount,
             $shippingName,
             $shippingPhone,
+            $shippingEmail,
             $shippingAddress,
             $note,
             $request
         ) {
             $order = Order::create([
                 'user_id' => $user->id,
-                'order_code' => 'OR' . now()->format('ymdHis') . $user->id,
+                'order_code' => 'OR' . now()->format('dmy') . rand(1000, 9999),
                 'subtotal' => $subtotal,
                 'discount_amount' => (string) $discountAmount,
                 'coupon_code' => $couponCode,
@@ -244,6 +251,7 @@ class CheckoutController extends Controller
                 'delivery_slot' => $deliverySlot,
                 'shipping_name' => $shippingName,
                 'shipping_phone' => $shippingPhone,
+                'shipping_email' => $shippingEmail,
                 'shipping_address' => $shippingAddress,
                 'total_amount' => $totalAmount,
                 'status' => 'pending',
@@ -306,18 +314,18 @@ class CheckoutController extends Controller
         }
 
         // COD
-        $this->sendOrderConfirmation($order);
+        $this->sendOrderConfirmation($order, $shippingEmail);
 
         return redirect()
             ->route('checkout.success', $order)
             ->with('success', 'Đặt hàng thành công!');
     }
 
-    private function sendOrderConfirmation(Order $order): void
+    private function sendOrderConfirmation(Order $order, ?string $email = null): void
     {
         try {
             $order->loadMissing(['orderItems', 'orderPayment', 'user']);
-            $email = $order->user?->email;
+            $email = $email ?? $order->user?->email;
             if ($email) {
                 Mail::to($email)->send(new OrderConfirmationMail($order));
             }

@@ -9,6 +9,7 @@ use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class AdminProductController extends Controller
 {
@@ -47,39 +48,24 @@ class AdminProductController extends Controller
 
     public function store(Request $request)
     {
-      $data = $request->validate([
-        'name' => 'required|max:255|unique:products,name',
-        'category_id '=>'required|exists:categories,id',
-        'description'=>'nullable',
-        'price'=>'required|numeric|min:0',
-        'sale_price'=>'nullable|numeric|min:0|lt:price',
-        'quantity'=>'required|min:0|integer',
-        'unit'=>'nullable|string|max:50',
-        'images'   => 'nullable|array',
-        'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
-        'delivery_mode'=>'nullable|string|in:both,pickup,ship',
-        'is_featured'=>'nullable|boolean',
-        'is_active'=>'nullable|boolean',
-
-
-      ],[
-            'name.required'        => 'Vui lòng nhập tên sản phẩm.',
-            'name.unique'          => 'Tên sản phẩm đã tồn tại.',
-            'category_id.required' => 'Vui lòng chọn danh mục.',
-            'price.required'       => 'Vui lòng nhập giá sản phẩm.',
-            'price.min'            => 'Giá sản phẩm không được âm.',
-            'sale_price.lt'        => 'Giá khuyến mãi phải nhỏ hơn giá gốc.',
-            'quantity.required'    => 'Vui lòng nhập số lượng.',
-            'images.*.image' => 'File tải lên bắt buộc phải là hình ảnh.',
-            'images.*.mimes' => 'Hình ảnh chỉ hỗ trợ định dạng jpeg, png, jpg, webp.',
-            'images.*.max'   => 'Hình ảnh không được vượt quá 2MB.',
-      ]);
+      $data = $this -> validated($request);
+      
       $data['is_active'] = $request->boolean('is_active');
       $data['is_featured'] = $request->boolean('is_featured');
       $data['unit'] = $data['unit'] ?: 'sản phẩm';
       $data['delivery_mode'] = $data['delivery_mode'] ?: 'both';
       $data['slug'] = $this->uniqueSlug($data['name']);
       $product = Product::create($data);
+      if($request->filled('manufacture_date')){
+        $shelfDays = $product->category->shelf_days ?? 7;
+        $product->manufacture_date = $request->manufacture_date;
+        $product->expiry_date = \Carbon\Carbon::parse($request->manufacture_date)->addDays($shelfDays);
+        $product->save();
+      }else{
+        $product->manufacture_date = null;
+        $product->expiry_date = null;
+        $product->save();
+      }
       $this->storeUploadedImages($request,$product);
       return redirect()->route('admin.products.index')->with('success','Thêm mới thành công');
     }
@@ -101,6 +87,17 @@ class AdminProductController extends Controller
         }
 
         $product->update($data);
+        if($request->filled('manufacture_date')){
+        $shelfDays = $product->category->shelf_days ?? 7;
+        $product->manufacture_date = $request->manufacture_date;
+        $product->expiry_date = \Carbon\Carbon::parse($request->manufacture_date)->addDays($shelfDays);
+        $product->save();
+      }else{
+        $product->manufacture_date = null;
+        $product->expiry_date = null;
+        $product->save();
+      }
+        
         $this->deleteSelectedImages($request, $product);
         $this->storeUploadedImages($request, $product);
         $this->ensurePrimaryImage($product);
@@ -152,6 +149,7 @@ class AdminProductController extends Controller
                 'sale_price',
                 'quantity',
                 'unit',
+                'manufacture_date',
                 'description',
                 'is_featured',
                 'is_active',
@@ -165,6 +163,7 @@ class AdminProductController extends Controller
                 '30000',
                 '100',
                 'kg',
+                '2026-08-01',
                 'Rau sạch',
                 '0',
                 '1',
@@ -201,19 +200,24 @@ class AdminProductController extends Controller
         $category = Category::where('slug', trim($data['category_slug']))->first();
         if (!$category) continue; 
 
-        
+        $mfgDate = !empty($data['manufacture_date']) ? Carbon::parse(trim($data['manufacture_date'])) : null;
+
         $product = Product::create([
-            'category_id'   => $category->id,
-            'name'          => trim($data['name']),
-            'slug'          => $this->uniqueSlug(trim($data['name'])),
-            'price'         => (float) $data['price'],
-            'sale_price'    => !empty($data['sale_price']) ? (float) $data['sale_price'] : null,
-            'quantity'      => (int) $data['quantity'],
-            'unit'          => !empty($data['unit']) ? trim($data['unit']) : 'sp',
-            'description'   => $data['description'] ?? null,
-            'is_featured'   => $data['is_featured'] == '1', 
-            'is_active'     => $data['is_active'] != '0',   
-            'delivery_mode' => !empty($data['delivery_mode']) ? trim($data['delivery_mode']) : 'both',
+            'category_id'      => $category->id,
+            'name'             => trim($data['name']),
+            'slug'             => $this->uniqueSlug(trim($data['name'])),
+            'price'            => (float) $data['price'],
+            'sale_price'       => !empty($data['sale_price']) ? (float) $data['sale_price'] : null,
+            'quantity'         => (int) $data['quantity'],
+            'unit'             => !empty($data['unit']) ? trim($data['unit']) : 'sp',
+            'manufacture_date' => $mfgDate?->toDateString(),
+            'expiry_date'      => ($mfgDate && $category->shelf_days)
+                                    ? $mfgDate->copy()->addDays($category->shelf_days)->toDateString()
+                                    : null,
+            'description'      => $data['description'] ?? null,
+            'is_featured'      => $data['is_featured'] == '1',
+            'is_active'        => $data['is_active'] != '0',
+            'delivery_mode'    => !empty($data['delivery_mode']) ? trim($data['delivery_mode']) : 'both',
         ]);
 
         if (!empty($data['image_url'])) {
@@ -353,6 +357,7 @@ class AdminProductController extends Controller
             'delivery_mode' => 'required|in:standard,express,both',
             'is_featured' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
+            'manufacture_date'=>'required|date',
             'images' => 'nullable|array|max:8',
             'images.*' => 'image|mimes:jpeg,jpg,png,webp,gif|max:2048',
             'delete_images' => 'nullable|array',
@@ -367,6 +372,7 @@ class AdminProductController extends Controller
             'delivery_mode.required' => 'Vui lòng chọn loại giao hàng.',
             'images.*.image' => 'File phải là hình ảnh.',
             'images.*.max' => 'Mỗi ảnh tối đa 2MB.',
+            'manufacture_date.required'=>'Vui lòng chọn ngày sản xuất.',
         ]);
 
         $data['is_featured'] = $request->boolean('is_featured');

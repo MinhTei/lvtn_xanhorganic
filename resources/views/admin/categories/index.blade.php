@@ -16,6 +16,7 @@
                     <th>Cha</th>
                     <th>Slug</th>
                     <th>SP</th>
+                    <th>Hạn</th>
                     <th>TT</th>
                     <th></th>
                 </tr>
@@ -28,6 +29,7 @@
                         <td>{{ $category->parent->name ?? '—' }}</td>
                         <td>{{ $category->slug }}</td>
                         <td>{{ $category->products_count }}</td>
+                        <td>{{ $category->shelf_days ?? '' }} </td>
                         <td>
                             @if($category->is_active)
                                 <span class="badge-soft">Hiện</span>

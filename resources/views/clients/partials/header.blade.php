@@ -27,6 +27,12 @@
                         <li class="{{ request()->routeIs('products') ? 'active' : '' }}">
                             <a href="{{ route('products') }}">Sản phẩm</a>
                         </li>
+                         <li class="{{ request()->routeIs('recipes') ? 'active' : '' }}">
+                            <a href="{{ route('recipes') }}">Góc ẩm thực</a>
+                        </li>
+                         <li class="{{ request()->routeIs('promos') ? 'active' : '' }}">
+                            <a href="{{ route('promos') }}">Khuyến mãi</a>
+                        </li>
                         <li class="{{ request()->routeIs('about') ? 'active' : '' }}">
                             <a href="{{ route('about') }}">Về chúng tôi</a>
                         </li>
