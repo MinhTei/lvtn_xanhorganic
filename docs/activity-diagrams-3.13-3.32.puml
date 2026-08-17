@@ -1,0 +1,431 @@
+' =====================================================
+' ACTIVITY DIAGRAMS — tương ứng sequence 3.13–3.32
+' Mỗi @startuml Act_3_xx tương ứng Hình 3.xx (sequence)
+' =====================================================
+
+@startuml Act_3_13
+title Hoạt động — Đăng nhập người dùng
+|Người dùng|
+start
+:Truy cập trang đăng nhập;
+|Hệ thống|
+:Hiển thị form đăng nhập;
+|Người dùng|
+:Nhập email và mật khẩu;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+if (Đăng nhập hợp lệ?) then (Đúng)
+  :Tạo session đăng nhập;
+  if (Vai trò?) then (Admin / Staff)
+    :Chuyển đến trang quản trị;
+  else (Khách hàng)
+    :Gộp giỏ hàng / yêu thích;
+    :Chuyển về trang chủ,\nthông báo thành công;
+  endif
+  stop
+else (Sai)
+  :Thông báo sai tài khoản / mật khẩu\nhoặc chưa kích hoạt;
+  stop
+endif
+@enduml
+
+@startuml Act_3_14
+title Hoạt động — Đăng ký tài khoản
+|Người dùng|
+start
+:Mở trang đăng ký;
+|Hệ thống|
+:Hiển thị form đăng ký;
+|Người dùng|
+:Điền thông tin và nhấn Đăng ký;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+:Kiểm tra email đã tồn tại;
+if (Hợp lệ?) then (Đúng)
+  :Tạo tài khoản (chưa kích hoạt);
+  :Gửi email kích hoạt;
+  |Người dùng|
+  :Mở link kích hoạt trong email;
+  |Hệ thống|
+  :Kích hoạt tài khoản;
+  :Chuyển đến trang đăng nhập;
+  stop
+else (Email trùng / lỗi)
+  :Thông báo lỗi;
+  stop
+endif
+@enduml
+
+@startuml Act_3_15
+title Hoạt động — Quên mật khẩu
+|Người dùng|
+start
+:Chọn Quên mật khẩu;
+|Hệ thống|
+:Hiển thị form nhập email;
+|Người dùng|
+:Nhập email và Gửi;
+|Hệ thống|
+:Tìm tài khoản theo email;
+:Gửi email chứa link đặt lại mật khẩu;
+|Người dùng|
+:Mở link trong email;
+:Nhập mật khẩu mới và Lưu;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+:Cập nhật mật khẩu;
+:Thông báo thành công,\nchuyển trang đăng nhập;
+stop
+@enduml
+
+@startuml Act_3_16
+title Hoạt động — Cập nhật thông tin cá nhân
+|Khách hàng|
+start
+:Xem hồ sơ cá nhân;
+|Hệ thống|
+:Hiển thị thông tin hiện tại;
+|Khách hàng|
+:Sửa thông tin và Lưu;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+if (Hợp lệ?) then (Đúng)
+  :Lưu thông tin mới;
+  :Thông báo thành công;
+  stop
+else (Sai)
+  :Thông báo lỗi;
+  stop
+endif
+@enduml
+
+@startuml Act_3_17
+title Hoạt động — Lịch sử đơn hàng
+|Khách hàng|
+start
+:Chọn mục Lịch sử đơn hàng;
+|Hệ thống|
+:Lấy danh sách đơn của khách;
+:Hiển thị danh sách đơn hàng;
+stop
+@enduml
+
+@startuml Act_3_18
+title Hoạt động — Chi tiết đơn hàng
+|Khách hàng|
+start
+:Chọn một đơn hàng;
+|Hệ thống|
+:Lấy chi tiết đơn hàng;
+:Hiển thị trạng thái và chi tiết đơn;
+stop
+@enduml
+
+@startuml Act_3_19
+title Hoạt động — Sản phẩm yêu thích
+|Khách hàng|
+start
+:Chọn mục Sản phẩm yêu thích;
+|Hệ thống|
+:Lấy danh sách yêu thích;
+:Hiển thị danh sách sản phẩm;
+stop
+@enduml
+
+@startuml Act_3_20
+title Hoạt động — Danh sách tài khoản
+|Admin|
+start
+:Truy cập trang quản lý người dùng;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Lấy danh sách người dùng;
+  :Hiển thị danh sách;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_21
+title Hoạt động — Tìm kiếm tài khoản
+|Admin|
+start
+:Nhập từ khóa tìm kiếm;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Tìm người dùng theo từ khóa;
+  if (Có kết quả?) then (Có)
+    :Hiển thị kết quả;
+    stop
+  else (Không)
+    :Hiển thị "Không có người dùng";
+    stop
+  endif
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_22
+title Hoạt động — Chi tiết tài khoản
+|Admin|
+start
+:Nhấn Chi tiết tài khoản;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Lấy thông tin tài khoản;
+  :Hiển thị chi tiết tài khoản;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_23
+title Hoạt động — Khóa / mở khóa tài khoản
+|Admin|
+start
+:Nhấn Khóa hoặc Mở khóa;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Kiểm tra điều kiện tài khoản;
+  if (Tài khoản hợp lệ để thao tác?) then (Không hợp lệ)
+    :Thông báo lỗi\n(tự khóa / chưa kích hoạt / khóa admin);
+    stop
+  elseif (Trạng thái hiện tại?) then (Đang hoạt động)
+    :Cập nhật trạng thái = khóa;
+    :Thông báo đã khóa;
+    stop
+  else (Đang khóa)
+    :Cập nhật trạng thái = hoạt động;
+    :Thông báo đã mở khóa;
+    stop
+  endif
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_23b
+title Hoạt động — Gán role tài khoản
+|Admin|
+start
+:Nhấn Gán role;
+|Hệ thống|
+:Hiển thị form gán role;
+|Admin|
+:Chọn role và Lưu;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Cập nhật role cho tài khoản;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_24
+title Hoạt động — Thêm Role
+|Admin|
+start
+:Nhấn Thêm role;
+|Hệ thống|
+:Hiển thị form thêm role;
+|Admin|
+:Nhập thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Tạo role và gán quyền;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_25
+title Hoạt động — Gán quyền Role
+|Admin|
+start
+:Nhấn Gán quyền;
+|Hệ thống|
+:Hiển thị form gán quyền;
+|Admin|
+:Cập nhật và Lưu quyền;
+|Hệ thống|
+if (Có quyền manage_users?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Đồng bộ quyền cho role;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_26
+title Hoạt động — Thêm sản phẩm
+|Admin|
+start
+:Nhấn Thêm sản phẩm;
+|Hệ thống|
+:Hiển thị form thêm sản phẩm;
+|Admin|
+:Nhập thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_products?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Tạo sản phẩm và lưu hình ảnh;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_27
+title Hoạt động — Sửa sản phẩm
+|Admin|
+start
+:Nhấn Sửa sản phẩm;
+|Hệ thống|
+:Hiển thị form sửa sản phẩm;
+|Admin|
+:Cập nhật thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_products?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Cập nhật sản phẩm,\nxóa / lưu hình ảnh mới;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_28
+title Hoạt động — Xóa sản phẩm
+|Admin|
+start
+:Nhấn Xóa sản phẩm;
+|Hệ thống|
+if (Có quyền manage_products?) then (Có)
+  :Kiểm tra sản phẩm đã có đơn hàng;
+  if (Đã có đơn hàng?) then (Có)
+    :Ẩn sản phẩm (ngừng bán);
+    :Thông báo đã ẩn sản phẩm;
+    stop
+  else (Chưa)
+    :Xóa hình ảnh và xóa sản phẩm;
+    :Thông báo đã xóa;
+    stop
+  endif
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_29
+title Hoạt động — Import sản phẩm
+|Admin|
+start
+:Nhấn Import CSV;
+|Hệ thống|
+:Hiển thị form import;
+|Admin|
+:Chọn file CSV và Import;
+|Hệ thống|
+if (Có quyền manage_products?) then (Có)
+  :Kiểm tra file (validate);
+  :Đọc file và tạo sản phẩm;
+  :Thông báo kết quả import;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_30
+title Hoạt động — Thêm danh mục
+|Admin|
+start
+:Nhấn Thêm danh mục;
+|Hệ thống|
+:Hiển thị form thêm danh mục;
+|Admin|
+:Nhập thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_categories?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Tạo danh mục;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_31
+title Hoạt động — Sửa danh mục
+|Admin|
+start
+:Nhấn Sửa danh mục;
+|Hệ thống|
+:Hiển thị form sửa danh mục;
+|Admin|
+:Cập nhật thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_categories?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Cập nhật danh mục;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_32
+title Hoạt động — Xóa danh mục
+|Admin|
+start
+:Nhấn Xóa danh mục;
+|Hệ thống|
+if (Có quyền manage_categories?) then (Có)
+  :Kiểm tra danh mục còn sản phẩm;
+  if (Còn sản phẩm?) then (Có)
+    :Thông báo không xóa được\n(danh mục còn sản phẩm);
+    stop
+  else (Không)
+    :Kiểm tra danh mục con;
+    if (Còn danh mục con?) then (Có)
+      :Thông báo không xóa được\n(còn danh mục con);
+      stop
+    else (Không)
+      :Xóa danh mục;
+      :Thông báo đã xóa;
+      stop
+    endif
+  endif
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml

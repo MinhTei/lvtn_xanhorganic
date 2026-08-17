@@ -1,0 +1,451 @@
+@startuml Fig_3_33
+title Hình 3.33 — Tìm kiếm sản phẩm
+actor "Khách hàng" as A
+boundary "Trang Danh sách sản phẩm" as B
+control "ProductController" as C
+entity "Product" as E
+
+A -> B : 1. Nhập từ khóa tìm kiếm
+B -> C : 1.1. index(q)
+C -> E : 1.1.1. searchProducts()
+E --> C : 1.1.1.1. return products
+alt Có kết quả
+  C --> B : 1.1.2. return productsView
+else Không có
+  C --> B : 1.1.2. Không tìm thấy
+end
+@enduml
+
+@startuml Fig_3_34
+title Hình 3.34 — Chi tiết sản phẩm
+actor "Khách hàng" as A
+boundary "Trang Chi tiết sản phẩm" as B
+control "ProductDetailController" as C
+entity "Product" as E
+entity "ProductReview" as R
+
+A -> B : 1. Chọn sản phẩm
+B -> C : 1.1. showProductDetail()
+C -> E : 1.1.1. getProductDetail()
+E --> C : 1.1.1.1. return product
+C -> R : 1.1.2. getReviews()
+R --> C : 1.1.2.1. return reviews
+C --> B : 1.1.3. return productDetailView
+@enduml
+
+@startuml Fig_3_35
+title Hình 3.35 — Thêm / bỏ yêu thích
+actor "Khách hàng" as A
+boundary "Trang Chi tiết sản phẩm" as B
+control "WishlistController" as C
+entity "Product" as P
+entity "Wishlist" as E
+
+A -> B : 1. Nhấn trái tim
+B -> C : 1.1. store()
+C -> C : 1.1.1. validate()
+C -> P : 1.1.1.1. checkProductExists()
+P --> C : 1.1.1.2. return product
+C -> E : 1.1.2. checkExists()
+E --> C : 1.1.2.1. return result
+alt Chưa yêu thích
+  C -> E : 1.1.3. add()
+  C --> B : 1.1.4. Thông báo đã thêm yêu thích
+else Đã yêu thích
+  C -> E : 1.1.3. remove()
+  C --> B : 1.1.4. Thông báo đã bỏ yêu thích
+end
+@enduml
+
+@startuml Fig_3_36
+title Hình 3.36 — Thêm vào giỏ hàng
+actor "Khách hàng" as A
+boundary "Trang Chi tiết sản phẩm" as B
+control "CartController" as C
+entity "Product" as E
+entity "Cart" as Cart
+
+A -> B : 1. Chọn số lượng và Thêm giỏ
+B -> C : 1.1. store()
+C -> C : 1.1.1. validate()
+C -> E : 1.1.1.1. checkStock()
+E --> C : 1.1.1.2. return result
+alt Đủ tồn
+  C -> Cart : 1.1.2. addToCart()
+  Cart --> C : 1.1.2.1. return
+  C --> B : 1.1.3. Thêm thành công
+else Không đủ
+  C --> B : 1.1.2. Thông báo lỗi
+end
+@enduml
+
+@startuml Fig_3_37
+title Hình 3.37 — Cập nhật giỏ hàng
+actor "Khách hàng" as A
+boundary "Trang Giỏ hàng" as B
+control "CartController" as C
+entity "Product" as E
+entity "Cart" as Cart
+
+alt Đổi số lượng
+  A -> B : 1. Cập nhật số lượng
+  B -> C : 1.1. update()
+  C -> E : 1.1.1. checkStock()
+  E --> C : 1.1.1.1. return result
+  alt Vượt tồn
+    C -> C : 1.1.2. Cắt về max
+  end
+  C -> Cart : 1.1.3. update()
+  C --> B : 1.1.4. Cập nhật thành công
+else Xóa khỏi giỏ
+  A -> B : 2. Nhấn xóa
+  B -> C : 2.1. destroy()
+  C -> Cart : 2.1.1. delete()
+  C --> B : 2.1.2. Đã xóa
+end
+@enduml
+
+@startuml Fig_3_38
+title Hình 3.38 — Thiết lập thông tin giao hàng
+actor "Khách hàng" as A
+boundary "Trang Giỏ hàng" as G
+boundary "Trang Thanh toán" as B
+control "CheckoutController" as C
+entity "UserAddress" as UA
+
+entity "Coupon" as CP
+
+A -> G : 1. Tiến hành đặt hàng
+alt Đã đăng nhập
+  G -> C : 1.1. index()
+  C -> UA : 1.1.1. getAddresses()
+  UA --> C : 1.1.1.1. return addresses
+  C --> B : 1.1.2. return checkoutForm
+  A -> B : 2. Điền thông tin giao hàng và chọn tùy chọn
+  note right of B
+    Địa chỉ, thời gian nhận hàng,\nphương thức thanh toán
+  end note
+  opt Khách nhập mã giảm giá
+    A -> B : 3. Áp mã giảm giá
+    B -> C : 3.1. applyCoupon()
+    C -> CP : 3.1.1. validateCoupon()
+    CP --> C : 3.1.1.1. return result
+    alt Mã không hợp lệ
+      C --> B : 3.1.2. Thông báo lỗi
+    else Mã hợp lệ
+      C --> B : 3.1.2. Cập nhật tạm tính
+    end
+  end
+else Chưa đăng nhập
+  G --> A : 1.1. Chuyển trang đăng nhập
+end
+@enduml
+
+@startuml Fig_3_39
+title Hình 3.39 — Thanh toán đơn hàng
+actor "Khách hàng" as A
+boundary "Trang Giỏ hàng" as Cart
+boundary "Trang Thanh toán" as B
+boundary "Thanh toán VNPay" as G
+control "CheckoutController" as C
+entity "Order" as E
+
+A -> Cart : 1. Tiến hành đặt hàng
+Cart -> C : 1.1. index()
+C --> B : 1.1.1. return checkoutForm
+
+A -> B : 2. Điền đầy đủ thông tin và phương thức thanh toán
+B -> C : 2.1. store()
+C -> C : 2.1.1. validate()
+
+alt Thành công
+  alt COD
+    C -> E : 2.1.2. createOrder()
+    E --> C : 2.1.2.1. Tạo đơn hàng thành công
+    C --> B : 2.1.3. Thông báo đặt hàng thành công và gửi email
+  else VNPay
+    C -> E : 2.1.2. createOrder()
+    note right of E
+      Tạo đơn trước khi\nchuyển sang VNPay
+    end note
+    E --> C : 2.1.2.1. Tạo đơn hàng thành công
+    C --> G : 2.1.3. return vnpayForm
+    A -> G : 2.1.4. Nhập thông tin thanh toán VNPay
+    G -> C : 2.1.5. applyPaymentResult()
+    alt Thanh toán thành công
+      C -> E : 2.1.5.1. updatePayment()
+      C --> B : 2.1.5.2. Thông báo thanh toán thành công và gửi email
+    else Thanh toán thất bại
+      C -> E : 2.1.5.1. cancelOrder()
+      note right of E
+        Hủy đơn; hoàn kho;\nkhôi phục giỏ hàng
+      end note
+      C --> B : 2.1.5.2. Thanh toán không thành công
+    end
+  end
+else Không hợp lệ
+  C --> B : 2.1.2. Thông báo lỗi
+end
+@enduml
+
+@startuml Fig_3_40
+title Hình 3.40 — Thêm đánh giá
+actor "Khách hàng" as A
+boundary "Trang Chi tiết đơn hàng" as B
+control "AccountController" as C
+entity "Order" as O
+entity "ProductReview" as E
+
+A -> B : 1. Xem đơn hàng đã nhận
+note right of B
+  Chỉ đơn "Đã giao" mới hiện\nnút viết đánh giá
+end note
+A -> B : 2. Viết đánh giá sản phẩm
+B -> C : 2.1. storeReview()
+C -> O : 2.1.1. checkOrderDelivered()
+O --> C : 2.1.1.1. Đã giao hàng
+C -> C : 2.1.2. validate()
+alt Chưa đánh giá sản phẩm này
+  C -> E : 2.1.2.1. create()
+  C --> B : 2.1.3. Thông báo thành công
+else Đã đánh giá rồi
+  C --> B : 2.1.2.1. Thông báo đã đánh giá
+end
+@enduml
+
+@startuml Fig_3_41
+title Hình 3.41 — Sửa đánh giá
+actor "Khách hàng" as A
+boundary "Trang Chi tiết sản phẩm" as B
+control "ProductDetailController" as C
+entity "Product" as P
+entity "ProductReview" as E
+
+A -> B : 1. Xem chi tiết sản phẩm
+B -> C : 1.1. showProductDetail()
+C -> P : 1.1.1. getProductDetail()
+P --> C : 1.1.1.1. return product
+C -> E : 1.1.2. getReviews()
+E --> C : 1.1.2.1. return reviews
+C --> B : 1.1.3. return productDetailView
+
+A -> B : 2. Điền thông tin chỉnh sửa
+B -> C : 2.1. updateReview()
+C -> C : 2.1.1. validate()
+alt Thành công
+  C -> E : 2.1.2. update()
+  C --> B : 2.1.3. Thông báo thành công
+else Thất bại
+  C --> B : 2.1.2. Thông báo thất bại
+end
+@enduml
+
+@startuml Fig_3_42
+title Hình 3.42 — Xóa đánh giá
+actor "Khách hàng" as A
+boundary "Trang Chi tiết sản phẩm" as B
+control "ProductDetailController" as C
+entity "Product" as P
+entity "ProductReview" as E
+
+A -> B : 1. Xem chi tiết sản phẩm
+B -> C : 1.1. showProductDetail()
+C -> P : 1.1.1. getProductDetail()
+P --> C : 1.1.1.1. return product
+C -> E : 1.1.2. getReviews()
+E --> C : 1.1.2.1. return reviews
+C --> B : 1.1.3. return productDetailView
+
+A -> B : 2. Xóa đánh giá
+B -> C : 2.1. destroyReview()
+C -> C : 2.1.1. validate()
+alt Thành công
+  C -> E : 2.1.2. delete()
+  C --> B : 2.1.3. Thông báo đã xóa
+else Thất bại
+  C --> B : 2.1.2. Thông báo thất bại
+end
+@enduml
+
+@startuml Fig_3_43
+title Hình 3.43 — Tìm đơn hàng (Admin)
+actor "Admin" as A
+boundary "Trang Quản lý đơn hàng" as B
+control "AdminOrderController" as C
+entity "Order" as E
+
+A -> B : 1. Nhập từ khóa / lọc
+B -> C : 1.1. index(q, status)
+alt Có quyền manage_orders
+  C -> E : 1.1.1. searchOrders()
+  E --> C : 1.1.1.1. return orders
+  C --> B : 1.1.2. return ordersView
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_44
+title Hình 3.44 — Cập nhật trạng thái đơn
+actor "Admin" as A
+boundary "Trang Chi tiết đơn hàng" as B
+control "AdminOrderController" as C
+entity "Order" as E
+entity "OrderStatusLogs" as L
+
+A -> B : 1. Chọn trạng thái mới
+B -> C : 1.1. updateStatus()
+alt Có quyền manage_orders
+  C -> C : 1.1.1. validateStatus()
+  alt Thành công
+    C -> E : 1.1.2. update()
+    C -> L : 1.1.2.1. create()
+    C --> B : 1.1.3. Thông báo + gửi email khách
+  else Lỗi
+    C --> B : 1.1.2. Thông báo lỗi
+  end
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_45
+title Hình 3.45 — In hóa đơn
+actor "Admin" as A
+boundary "Trang Chi tiết đơn hàng" as B
+control "AdminOrderController" as C
+entity "Order" as E
+
+A -> B : 1. Nhấn In hóa đơn
+B -> C : 1.1. invoice()
+alt Có quyền manage_orders
+  C -> E : 1.1.1. getOrderDetail()
+  E --> C : 1.1.1.1. return order
+  C --> A : 1.1.2. Xuất PDF hóa đơn
+else Không có quyền
+  C --> B : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_46
+title Hình 3.46 — Thêm mã giảm giá
+actor "Admin" as A
+boundary "Trang Mã giảm giá" as L
+boundary "Trang Thêm mã giảm giá" as B
+control "AdminCouponController" as C
+entity "Coupon" as E
+
+A -> L : 1. Nhấn Thêm mã
+L -> C : 1.1. create()
+C --> B : 1.1.1. return createForm
+
+A -> B : 2. Nhập thông tin và Lưu
+B -> C : 2.1. store()
+alt Có quyền manage_coupons
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. create()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_47
+title Hình 3.47 — Sửa mã giảm giá
+actor "Admin" as A
+boundary "Trang Mã giảm giá" as L
+boundary "Trang Sửa mã giảm giá" as B
+control "AdminCouponController" as C
+entity "Coupon" as E
+
+A -> L : 1. Nhấn Sửa
+L -> C : 1.1. edit()
+C --> B : 1.1.1. return editForm
+
+A -> B : 2. Cập nhật và Lưu
+B -> C : 2.1. update()
+alt Có quyền manage_coupons
+  C -> C : 2.1.1. validate()
+  C -> E : 2.1.1.1. update()
+  C --> L : 2.1.2. Thông báo thành công
+else Không có quyền
+  C --> L : 2.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_48
+title Hình 3.48 — Thống kê tổng quan
+actor "Admin" as A
+boundary "Trang Dashboard" as B
+control "AdminDashboardController" as C
+entity "Order" as E
+entity "OrderItem" as EI
+entity "User" as EU
+
+A -> B : 1. Truy cập Dashboard
+B -> C : 1.1. index()
+alt Có quyền truy cập admin
+  C -> E : 1.1.1. getOrderStats()
+  E --> C : 1.1.1.1. return orderStats
+  C -> EI : 1.1.2. getTopSellingProducts()
+  EI --> C : 1.1.2.1. return topProducts
+  C -> EU : 1.1.3. countUsers()
+  EU --> C : 1.1.3.1. return userCount
+  C --> B : 1.1.4. return dashboardView
+else Không có quyền
+  C --> A : 1.1.1. Chuyển về trang chủ / báo lỗi
+end
+@enduml
+
+@startuml Fig_3_49
+title Hình 3.49 — Lọc thống kê theo thời gian
+actor "Admin" as A
+boundary "Trang Dashboard" as B
+control "AdminDashboardController" as C
+entity "Order" as E
+entity "OrderItem" as EI
+entity "User" as EU
+
+A -> B : 1. Chọn Từ ngày / Đến ngày
+B -> C : 1.1. index(from, to)
+alt Có quyền truy cập admin
+  C -> C : 1.1.1. resolveDateRange(from, to)
+  C -> E : 1.1.2. getOrderStatsByDate(from, to)
+  E --> C : 1.1.2.1. return orderStats
+  C -> EI : 1.1.3. getTopSellingProducts(from, to)
+  EI --> C : 1.1.3.1. return topProducts
+  C -> EU : 1.1.4. countUsers()
+  EU --> C : 1.1.4.1. return userCount
+  C --> B : 1.1.5. return dashboardView
+else Không có quyền
+  C --> A : 1.1.1. Thông báo không có quyền
+end
+@enduml
+
+@startuml Fig_3_50
+title Hình 3.50 — Xuất báo cáo
+actor "Admin" as A
+boundary "Trang Dashboard" as B
+control "AdminDashboardController" as C
+entity "Order" as E
+entity "OrderItem" as EI
+entity "User" as EU
+
+A -> B : 1. Chọn Xuất CSV hoặc Xuất PDF
+alt Có quyền truy cập admin
+  alt CSV
+    B -> C : 1.1. export(from, to)
+  else PDF
+    B -> C : 1.1. exportPdf(from, to)
+  end
+  C -> E : 1.2. getOrderStatsByDate(from, to)
+  E --> C : 1.2.1. return orderStats
+  C -> EI : 1.3. getTopSellingProducts(from, to)
+  EI --> C : 1.3.1. return topProducts
+  C -> EU : 1.4. countUsers()
+  EU --> C : 1.4.1. return userCount
+  C --> A : 1.5. Tải file báo cáo (CSV / PDF)
+else Không có quyền
+  C --> A : 1.1. Thông báo không có quyền
+end
+@enduml

@@ -1,0 +1,377 @@
+' =====================================================
+' ACTIVITY DIAGRAMS — tương ứng sequence 3.33–3.50
+' Mỗi @startuml Act_3_xx tương ứng Hình 3.xx (sequence)
+' =====================================================
+
+@startuml Act_3_33
+title Hoạt động — Tìm kiếm sản phẩm
+|Khách hàng|
+start
+:Nhập từ khóa tìm kiếm;
+|Hệ thống|
+:Tìm sản phẩm theo từ khóa;
+if (Có kết quả?) then (Có)
+  :Hiển thị danh sách sản phẩm;
+  stop
+else (Không)
+  :Hiển thị "Không tìm thấy sản phẩm";
+  stop
+endif
+@enduml
+
+@startuml Act_3_34
+title Hoạt động — Chi tiết sản phẩm
+|Khách hàng|
+start
+:Chọn một sản phẩm;
+|Hệ thống|
+:Lấy thông tin chi tiết sản phẩm;
+:Lấy danh sách đánh giá;
+:Hiển thị trang chi tiết sản phẩm;
+stop
+@enduml
+
+@startuml Act_3_35
+title Hoạt động — Thêm / bỏ yêu thích
+|Khách hàng|
+start
+:Nhấn biểu tượng trái tim;
+|Hệ thống|
+:Kiểm tra sản phẩm tồn tại (validate);
+:Kiểm tra sản phẩm trong danh sách yêu thích;
+if (Đã có trong yêu thích?) then (Chưa)
+  :Thêm vào danh sách yêu thích;
+  :Thông báo đã thêm;
+  stop
+else (Rồi)
+  :Bỏ khỏi danh sách yêu thích;
+  :Thông báo đã bỏ;
+  stop
+endif
+@enduml
+
+@startuml Act_3_36
+title Hoạt động — Thêm vào giỏ hàng
+|Khách hàng|
+start
+:Chọn số lượng và nhấn Thêm giỏ;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+:Kiểm tra tồn kho;
+if (Đủ tồn kho?) then (Đủ)
+  :Thêm sản phẩm vào giỏ hàng;
+  :Thông báo thêm thành công;
+  stop
+else (Không đủ)
+  :Thông báo lỗi tồn kho;
+  stop
+endif
+@enduml
+
+@startuml Act_3_37
+title Hoạt động — Cập nhật giỏ hàng
+|Khách hàng|
+start
+if (Thao tác?) then (Đổi số lượng)
+  :Nhập số lượng mới;
+  |Hệ thống|
+  :Kiểm tra tồn kho;
+  if (Vượt tồn kho?) then (Có)
+    :Điều chỉnh về số lượng tối đa;
+  endif
+  :Cập nhật giỏ hàng;
+  :Thông báo cập nhật thành công;
+  stop
+else (Xóa khỏi giỏ)
+  :Nhấn Xóa sản phẩm;
+  |Hệ thống|
+  :Xóa sản phẩm khỏi giỏ;
+  :Thông báo đã xóa;
+  stop
+endif
+@enduml
+
+@startuml Act_3_38
+title Hoạt động — Thiết lập thông tin giao hàng
+|Khách hàng|
+start
+:Nhấn Tiến hành đặt hàng;
+|Hệ thống|
+if (Đã đăng nhập?) then (Rồi)
+  :Lấy sổ địa chỉ của khách;
+  :Hiển thị trang thanh toán;
+  |Khách hàng|
+  :Điền thông tin giao hàng\n(địa chỉ, thời gian nhận,\nphương thức thanh toán);
+  if (Có mã giảm giá?) then (Có)
+    :Nhập và áp mã giảm giá;
+    |Hệ thống|
+    :Kiểm tra mã giảm giá;
+    if (Mã hợp lệ?) then (Hợp lệ)
+      :Cập nhật tạm tính;
+      stop
+    else (Không hợp lệ)
+      :Thông báo mã không hợp lệ;
+      stop
+    endif
+  else (Không)
+    stop
+  endif
+else (Chưa)
+  :Chuyển đến trang đăng nhập;
+  stop
+endif
+@enduml
+
+@startuml Act_3_39
+title Hoạt động — Thanh toán đơn hàng
+|Khách hàng|
+start
+:Điền đầy đủ thông tin\nvà chọn phương thức thanh toán;
+:Nhấn Đặt hàng;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+if (Hợp lệ?) then (Đúng)
+  if (Phương thức thanh toán?) then (COD)
+    :Tạo đơn hàng, trừ tồn kho;
+    :Gửi email xác nhận;
+    :Thông báo đặt hàng thành công;
+    stop
+  else (VNPay)
+    :Tạo đơn hàng (chờ thanh toán);
+    :Chuyển sang cổng VNPay;
+    |Khách hàng|
+    :Nhập thông tin thanh toán VNPay;
+    |Hệ thống|
+    if (Thanh toán thành công?) then (Thành công)
+      :Cập nhật trạng thái thanh toán;
+      :Gửi email xác nhận;
+      :Thông báo thanh toán thành công;
+      stop
+    else (Thất bại)
+      :Hủy đơn, hoàn kho,\nkhôi phục giỏ hàng;
+      :Thông báo thanh toán\nkhông thành công;
+      stop
+    endif
+  endif
+else (Không hợp lệ)
+  :Thông báo lỗi;
+  stop
+endif
+@enduml
+
+@startuml Act_3_40
+title Hoạt động — Thêm đánh giá
+|Khách hàng|
+start
+:Xem đơn hàng đã giao;
+:Viết đánh giá sản phẩm và Gửi;
+|Hệ thống|
+:Kiểm tra đơn đã giao hàng;
+:Kiểm tra dữ liệu (validate);
+if (Đã đánh giá sản phẩm này?) then (Chưa)
+  :Lưu đánh giá;
+  :Thông báo thành công;
+  stop
+else (Rồi)
+  :Thông báo đã đánh giá trước đó;
+  stop
+endif
+@enduml
+
+@startuml Act_3_41
+title Hoạt động — Sửa đánh giá
+|Khách hàng|
+start
+:Xem chi tiết sản phẩm;
+|Hệ thống|
+:Hiển thị sản phẩm và đánh giá;
+|Khách hàng|
+:Sửa nội dung đánh giá và Lưu;
+|Hệ thống|
+:Kiểm tra dữ liệu (validate);
+if (Hợp lệ?) then (Đúng)
+  :Cập nhật đánh giá;
+  :Thông báo thành công;
+  stop
+else (Sai)
+  :Thông báo thất bại;
+  stop
+endif
+@enduml
+
+@startuml Act_3_42
+title Hoạt động — Xóa đánh giá
+|Khách hàng|
+start
+:Xem chi tiết sản phẩm;
+|Hệ thống|
+:Hiển thị sản phẩm và đánh giá;
+|Khách hàng|
+:Nhấn Xóa đánh giá;
+|Hệ thống|
+:Kiểm tra quyền xóa (chủ đánh giá);
+if (Hợp lệ?) then (Đúng)
+  :Xóa đánh giá;
+  :Thông báo đã xóa;
+  stop
+else (Sai)
+  :Thông báo thất bại;
+  stop
+endif
+@enduml
+
+@startuml Act_3_43
+title Hoạt động — Tìm đơn hàng (Admin)
+|Admin|
+start
+:Nhập từ khóa / chọn bộ lọc;
+|Hệ thống|
+if (Có quyền manage_orders?) then (Có)
+  :Tìm đơn hàng theo điều kiện;
+  :Hiển thị danh sách đơn hàng;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_44
+title Hoạt động — Cập nhật trạng thái đơn
+|Admin|
+start
+:Chọn trạng thái mới cho đơn;
+|Hệ thống|
+if (Có quyền manage_orders?) then (Có)
+  :Kiểm tra trạng thái hợp lệ;
+  if (Hợp lệ?) then (Đúng)
+    :Cập nhật trạng thái đơn;
+    :Ghi log trạng thái;
+    :Gửi email thông báo cho khách;
+    :Thông báo thành công;
+    stop
+  else (Sai)
+    :Thông báo lỗi;
+    stop
+  endif
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_45
+title Hoạt động — In hóa đơn
+|Admin|
+start
+:Nhấn In hóa đơn;
+|Hệ thống|
+if (Có quyền manage_orders?) then (Có)
+  :Lấy chi tiết đơn hàng;
+  :Xuất file PDF hóa đơn;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_46
+title Hoạt động — Thêm mã giảm giá
+|Admin|
+start
+:Nhấn Thêm mã giảm giá;
+|Hệ thống|
+:Hiển thị form thêm mã;
+|Admin|
+:Nhập thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_coupons?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Tạo mã giảm giá;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_47
+title Hoạt động — Sửa mã giảm giá
+|Admin|
+start
+:Nhấn Sửa mã giảm giá;
+|Hệ thống|
+:Hiển thị form sửa mã;
+|Admin|
+:Cập nhật thông tin và Lưu;
+|Hệ thống|
+if (Có quyền manage_coupons?) then (Có)
+  :Kiểm tra dữ liệu (validate);
+  :Cập nhật mã giảm giá;
+  :Thông báo thành công;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_48
+title Hoạt động — Thống kê tổng quan
+|Admin|
+start
+:Truy cập Dashboard;
+|Hệ thống|
+if (Có quyền truy cập admin?) then (Có)
+  :Thống kê đơn hàng, doanh thu,\nphân bố trạng thái đơn;
+  :Thống kê top sản phẩm bán chạy;
+  :Đếm tổng người dùng;
+  :Hiển thị Dashboard\n(thẻ số liệu + biểu đồ + bảng);
+  stop
+else (Không)
+  :Chuyển về trang chủ / báo lỗi;
+  stop
+endif
+@enduml
+
+@startuml Act_3_49
+title Hoạt động — Lọc thống kê theo thời gian
+|Admin|
+start
+:Chọn Từ ngày / Đến ngày và nhấn Lọc;
+|Hệ thống|
+if (Có quyền truy cập admin?) then (Có)
+  :Chuẩn hóa khoảng ngày;
+  :Thống kê đơn hàng, doanh thu\ntheo khoảng ngày;
+  :Thống kê top sản phẩm bán chạy\ntheo khoảng ngày;
+  :Đếm tổng người dùng;
+  :Hiển thị Dashboard theo bộ lọc;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
+
+@startuml Act_3_50
+title Hoạt động — Xuất báo cáo
+|Admin|
+start
+:Chọn Xuất CSV hoặc Xuất PDF;
+|Hệ thống|
+if (Có quyền truy cập admin?) then (Có)
+  :Tổng hợp dữ liệu báo cáo\n(doanh thu, đơn hàng, người dùng,\ntop sản phẩm) theo khoảng ngày;
+  if (Định dạng?) then (CSV)
+    :Tạo file CSV;
+  else (PDF)
+    :Tạo file PDF;
+  endif
+  :Trả file về cho Admin tải xuống;
+  stop
+else (Không)
+  :Thông báo không có quyền;
+  stop
+endif
+@enduml
