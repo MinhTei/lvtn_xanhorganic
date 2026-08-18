@@ -19,6 +19,7 @@ class VnPayController extends Controller
     
     public function return(Request $request)
     {
+        //dd($request->fullUrl());
         $verified = VnPayService::verifyCallback($request);
 
         if (!$verified['txn_ref']) {
@@ -71,7 +72,7 @@ class VnPayController extends Controller
         $verified = VnPayService::verifyCallback($request);
 
         if (!$verified['valid']) {
-            return response()->json(['RspCode' => '97', 'Message' => 'Invalid signature']);
+            return response()->json(['RspCode' => '97', 'Message' => 'Không hợp lệ']);
         }
 
         $order = Order::with('orderPayment')
@@ -79,27 +80,27 @@ class VnPayController extends Controller
             ->first();
 
         if (!$order) {
-            return response()->json(['RspCode' => '01', 'Message' => 'Order not found']);
+            return response()->json(['RspCode' => '01', 'Message' => 'Không tìm thấy đơn hàng']);
         }
 
         $payment = $order->orderPayment;
         if ($payment && $payment->payment_status === 'completed') {
-            return response()->json(['RspCode' => '02', 'Message' => 'Order already confirmed']);
+            return response()->json(['RspCode' => '02', 'Message' => 'Đơn hàng đã được xử lý']);
         }
 
         // Kiểm tra số tiền
         if ($verified['amount'] !== null
             && abs($verified['amount'] - (float) $order->total_amount) > 0.01) {
-            return response()->json(['RspCode' => '04', 'Message' => 'Invalid amount']);
+            return response()->json(['RspCode' => '04', 'Message' => 'Số tiền không hợp lệ']);
         }
 
         $this->applyPaymentResult($order, $verified);
 
         if (VnPayService::isSuccess($verified)) {
-            return response()->json(['RspCode' => '00', 'Message' => 'Confirm Success']);
+            return response()->json(['RspCode' => '00', 'Message' => 'Thành công']);
         }
 
-        return response()->json(['RspCode' => '00', 'Message' => 'Confirm Success']);
+        return response()->json(['RspCode' => '00', 'Message' => 'Thành công']);
     }
 
     private function applyPaymentResult(Order $order, array $verified): void
