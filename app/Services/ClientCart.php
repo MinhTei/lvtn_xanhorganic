@@ -98,6 +98,13 @@ class ClientCart
     {
         //Kiểm kho
         $product = Product::findOrFail(($productId));
+        if ($product->is_active == false) {
+            return [
+                'success' => false,
+                'message' => 'Sản phẩm đã ngừng bán',
+                'cart_count' => self::count(),
+            ];
+        }
         $stock = $product->quantity;
         if ($stock < 1) {
             return [
@@ -147,6 +154,15 @@ class ClientCart
     public static function add(int $productId, int $quantity = 1): array
     {
         $product = Product::findOrFail($productId);
+
+        if ($product->is_active == false) {
+            return [
+                'success' => false,
+                'message' => "Sản phẩm đã ngừng bán.",
+                'cart_count' => self::count()
+            ];
+        }
+
         $stock = $product->quantity;
 
         //số lượng đang có trong giỏ

@@ -44,14 +44,14 @@
     <div class="col-md-3">
         <div class="form-group">
             <label>Giá *</label>
-            <input type="number" name="price" class="form-control" min="0" step="1000"
+            <input type="number" name="price" class="form-control" min="1000" step="100"
                 value="{{ old('price', $p->price ?? '') }}" required>
         </div>
     </div>
     <div class="col-md-3">
         <div class="form-group">
             <label>Giá KM</label>
-            <input type="number" name="sale_price" class="form-control" min="0" step="1000"
+            <input type="number" name="sale_price" class="form-control" min="1000" step="100"
                 value="{{ old('sale_price', $p->sale_price ?? '') }}">
         </div>
     </div>
@@ -74,8 +74,8 @@
 
 <div class="form-group">
     <label>Ảnh sản phẩm</label>
-    <input type="file" name="images[]" id="product_images_input" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
-        multiple>
+    <input type="file" name="images[]" id="product_images_input" class="form-control"
+        accept="image/jpeg,image/png,image/jpg,image/webp,image/gif" multiple>
     <small class="text-muted">Có thể chọn nhiều ảnh (JPG, PNG, WEBP). Ảnh đầu tiên sẽ là ảnh chính nếu chưa có
         ảnh.</small>
 
@@ -102,6 +102,18 @@
 </div>
 
 <input type="hidden" name="delivery_mode" value="both">
+
+<div class="mb-3">
+    <label class="form-label fw-semibold">Chế độ định giá tự động</label>
+    <select name="pricing_mode" class="form-select" id="pricing_mode">
+        <option value="standard" @selected(old('pricing_mode', $p->pricing_mode ?? 'standard') === 'standard')>Tiêu chuẩn
+        </option>
+        <option value="daily_cycle" @selected(old('pricing_mode', $p->pricing_mode ?? '') === 'daily_cycle')>Daily Cycle
+        </option>
+    </select>
+</div>
+
+
 
 <div class="d-flex gap-4">
     <div class="form-check">

@@ -11,7 +11,9 @@ class Product extends Model
     protected $fillable = [
         'category_id', 'name', 'slug', 'description', 'price', 'sale_price',
         'quantity', 'unit', 'is_featured', 'is_active', 'delivery_mode', 'manufacture_date', 'expiry_date',
+        'pricing_mode',
     ];
+
 
     protected $casts = [
         'manufacture_date' => 'date',

@@ -31,7 +31,7 @@
         </div>
         <div class="form-group">
             <label>Thời hạn sử dụng(ngày)</label>
-            <input type="number" name ="shelf_days" class = "form-control" min ="1" value ="{{ old('shelf_days',$category->shelf_days?? '') }}" placeholder="vd:3" required/>
+            <input type="number" name ="shelf_days" class = "form-control" min ="1" value ="{{ old('shelf_days',$category->shelf_days?? '') }}" placeholder=""/>
             <small class = "text_muted">Dùng để chạy flashsale cho sản phẩm cận date</small>
         </div>
         <div class="form-check mb-3">

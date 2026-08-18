@@ -45,12 +45,21 @@ class AdminProductController extends Controller implements HasMiddleware
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === '1');
         }
+
+        if ($request->filled('alert')) {
+            if ($request->alert === 'low_stock') {
+                $query->where('quantity', '<=', 10);
+            } elseif ($request->alert === 'near_expiry') {
+                $query->whereBetween('expiry_date', [now(), now()->addDays(5)]);
+            }
+        }
+
         $products = $query->paginate(12)->withQueryString();
 
         $categories = Category::where('is_active',1)->whereNull('parent_id')->get();
 
         $lowStock = Product ::where('quantity','<=',10)->count();
-        $lowDate = Product::whereBetween('expiry_date',[now(), now()->addDays(7)])->count();
+        $lowDate = Product::whereBetween('expiry_date',[now(), now()->addDays(5)])->count();
         return view('admin.products.index', compact('products', 'categories', 'lowStock', 'lowDate'));
     }
 
@@ -73,14 +82,14 @@ class AdminProductController extends Controller implements HasMiddleware
       $data['delivery_mode'] = $data['delivery_mode'] ?: 'both';
       $data['slug'] = $this->uniqueSlug($data['name']);
       $product = Product::create($data);
-      if($request->filled('manufacture_date')){
-        $shelfDays = $product->category->shelf_days ?? 7;
+      if($request->filled('manufacture_date') && $product->category->shelf_days !== null){
+        $shelfDays = $product->category->shelf_days;
         $product->manufacture_date = $request->manufacture_date;
         $product->expiry_date = \Carbon\Carbon::parse($request->manufacture_date)->addDays($shelfDays);
         $product->save();
       }else{
-        $product->manufacture_date = null;
-        $product->expiry_date = null;
+        $product->manufacture_date = $request->filled('manufacture_date') ? $request->manufacture_date : null;
+        $product->expiry_date = null; // Không có shelf_days → Không tính HSD
         $product->save();
       }
       $this->storeUploadedImages($request,$product);
@@ -104,14 +113,14 @@ class AdminProductController extends Controller implements HasMiddleware
         }
 
         $product->update($data);
-        if($request->filled('manufacture_date')){
-        $shelfDays = $product->category->shelf_days ?? 7;
+        if($request->filled('manufacture_date') && $product->category->shelf_days !== null){
+        $shelfDays = $product->category->shelf_days;
         $product->manufacture_date = $request->manufacture_date;
         $product->expiry_date = \Carbon\Carbon::parse($request->manufacture_date)->addDays($shelfDays);
         $product->save();
       }else{
-        $product->manufacture_date = null;
-        $product->expiry_date = null;
+        $product->manufacture_date = $request->filled('manufacture_date') ? $request->manufacture_date : null;
+        $product->expiry_date = null; // Không có shelf_days → Không tính HSD
         $product->save();
       }
         
@@ -171,6 +180,7 @@ class AdminProductController extends Controller implements HasMiddleware
                 'is_featured',
                 'is_active',
                 'delivery_mode',
+                'pricing_mode',
                 'image_url',
             ]);
             fputcsv($out, [
@@ -185,6 +195,7 @@ class AdminProductController extends Controller implements HasMiddleware
                 '0',
                 '1',
                 'both',
+                'standard',
                 '',
             ]);
             fclose($out);
@@ -228,13 +239,16 @@ class AdminProductController extends Controller implements HasMiddleware
             'quantity'         => (int) $data['quantity'],
             'unit'             => !empty($data['unit']) ? trim($data['unit']) : 'sp',
             'manufacture_date' => $mfgDate?->toDateString(),
-            'expiry_date'      => $mfgDate 
-                                    ? $mfgDate->copy()->addDays($category->shelf_days ?? 7)->toDateString()
+            'expiry_date'      => ($mfgDate && $category->shelf_days !== null)
+                                    ? $mfgDate->copy()->addDays($category->shelf_days)->toDateString()
                                     : null,
             'description'      => $data['description'] ?? null,
             'is_featured'      => $data['is_featured'] == '1',
             'is_active'        => $data['is_active'] != '0',
             'delivery_mode'    => !empty($data['delivery_mode']) ? trim($data['delivery_mode']) : 'both',
+            'pricing_mode'     => in_array(trim($data['pricing_mode'] ?? ''), ['standard', 'daily_cycle'])
+                                    ? trim($data['pricing_mode'])
+                                    : 'standard',
         ]);
 
         if (!empty($data['image_url'])) {
@@ -264,6 +278,7 @@ class AdminProductController extends Controller implements HasMiddleware
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
             'delivery_mode' => 'required|in:standard,express,both',
+            'pricing_mode' => 'nullable|in:standard,daily_cycle',
             'is_featured' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'manufacture_date'=>'required|date',

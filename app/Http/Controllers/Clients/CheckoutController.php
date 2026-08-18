@@ -172,9 +172,9 @@ class CheckoutController extends Controller
 
         $subtotal = 0;
         foreach ($cartItems as $item) {
-            if (!$item->product || $item->product->quantity < $item->quantity) {
+            if (!$item->product || $item->product->is_active == false || $item->product->quantity < $item->quantity) {
                 throw ValidationException::withMessages([
-                    'cart' => 'Sản phẩm "' . ($item->product->name ?? 'N/A') . '" không đủ tồn kho.',
+                    'cart' => 'Sản phẩm "' . ($item->product->name ?? 'N/A') . '" đã hết hàng hoặc ngừng bán.',
                 ]);
             }
             $price = $item->product->sale_price ?? $item->product->price;

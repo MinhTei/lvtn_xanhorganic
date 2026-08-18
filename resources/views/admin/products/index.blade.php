@@ -15,16 +15,20 @@
 
    <div class ="d-flex gap-3 mb-3 " >
     <div class="w-50">
-        <div class="p-3 flex-fill text-center" style="background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px;">
-            <h5 class="mb-2" style="font-size: 1rem; font-weight: 600;">Sản phẩm sắp hết hàng (&le; 10)</h5>
-            <h3 class="mb-0 fw-bold">{{ $lowStock ?? 0}}</h3>
-        </div>
+        <a href="{{ route('admin.products.index', ['alert' => 'low_stock']) }}" class="text-decoration-none">
+            <div class="p-3 flex-fill text-center" style="background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; {{ request('alert') == 'low_stock' ? 'box-shadow: 0 0 10px rgba(133,100,4,0.5); font-weight: bold;' : '' }}">
+                <h5 class="mb-2" style="font-size: 1rem; font-weight: 600;">Sản phẩm sắp hết hàng (&le; 10)</h5>
+                <h3 class="mb-0 fw-bold">{{ $lowStock ?? 0}}</h3>
+            </div>
+        </a>
     </div>
     <div class="w-50">
-        <div class="p-3 flex-fill text-center" style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 8px;">
-            <h5 class="mb-2" style="font-size: 1rem; font-weight: 600;">Sản phẩm sắp hết hạn </h5>
-            <h3 class="mb-0 fw-bold">{{ $lowDate ?? 0}}</h3>
-        </div>
+        <a href="{{ route('admin.products.index', ['alert' => 'near_expiry']) }}" class="text-decoration-none">
+            <div class="p-3 flex-fill text-center" style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 8px; {{ request('alert') == 'near_expiry' ? 'box-shadow: 0 0 10px rgba(114,28,36,0.5); font-weight: bold;' : '' }}">
+                <h5 class="mb-2" style="font-size: 1rem; font-weight: 600;">Sản phẩm sắp hết hạn (&le; 5 ngày)</h5>
+                <h3 class="mb-0 fw-bold">{{ $lowDate ?? 0}}</h3>
+            </div>
+        </a>
     </div>
    </div>
 
@@ -42,7 +46,15 @@
             <option value="1" @selected(request('status') === '1')>Đang bán</option>
             <option value="0" @selected(request('status') === '0')>Ẩn</option>
         </select> -->
+        <select name="alert" class="form-select">
+            <option value="">Lọc trạng thái</option>
+            <option value="low_stock" @selected(request('alert') === 'low_stock')>Sắp hết hàng (&le; 10)</option>
+            <option value="near_expiry" @selected(request('alert') === 'near_expiry')>Sắp hết hạn (&le; 5 ngày)</option>
+        </select>
         <button class="btn-admin btn-sm-admin" type="submit">Lọc</button>
+        <!-- @if(request()->anyFilled(['q', 'category_id', 'status', 'alert']))
+            <a href="{{ route('admin.products.index') }}" class="btn-admin btn-sm-admin btn-admin-outline" style="padding: 6px 12px;">Bỏ lọc</a>
+        @endif -->
     </form>
 
     <div class="table-responsive">

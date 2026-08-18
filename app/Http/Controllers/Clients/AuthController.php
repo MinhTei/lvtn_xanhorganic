@@ -106,9 +106,17 @@ class AuthController extends Controller
 
         if ($existingUser) {
             if ($existingUser->isPending()) {
-                return redirect()->route('register')->with(
-                    'warning',
-                    'Tài khoản đã được đăng ký, đang chờ được kích hoạt!'
+                // Tạo lại token mới nếu user đăng ký lại khi đang pending
+                $token = Str::random(64);
+                $existingUser->activation_token = $token;
+                $existingUser->updated_at = now();
+                $existingUser->save();
+
+                Mail::to($existingUser->email)->send(new \App\Mail\ActivationMail($token, $existingUser));
+
+                return redirect()->route('login')->with(
+                    'success',
+                    'Tài khoản đang chờ kích hoạt. Chúng tôi vừa gửi lại một link kích hoạt mới (có hạn 5 phút) vào email của bạn!'
                 );
             }
 
@@ -133,7 +141,7 @@ class AuthController extends Controller
 
         return redirect()->back()->with(
             'success',
-            'Tài khoản đã được đăng ký, chờ được kích hoạt!'
+            'Tài khoản đã được đăng ký! Vui lòng kiểm tra email để kích hoạt tài khoản (Link có hiệu lực trong 5 phút).'
         );
     }
 
@@ -142,13 +150,21 @@ class AuthController extends Controller
         $user = User::where('activation_token', $token)->first();
 
         if ($user) {
+            // Kiểm tra timeout 5 phút dựa trên updated_at
+            if ($user->updated_at->diffInMinutes(now()) > 5) {
+                return redirect()->route('login')->with(
+                    'error',
+                    'Liên kết kích hoạt đã hết hạn (quá 5 phút). Vui lòng đăng ký lại để nhận link mới!'
+                );
+            }
+
             $user->status = 'active';
             $user->activation_token = null;
             $user->save();
 
             return redirect()->route('login')->with(
                 'success',
-                'Tài khoản đã được kích hoạt. Vui lòng đăng nhập!'
+                'Tài khoản đã được kích hoạt thành công. Vui lòng đăng nhập!'
             );
         }
 
