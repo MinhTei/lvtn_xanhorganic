@@ -96,9 +96,10 @@ class AdminOrderController extends Controller
         }
 
         $oldStatus = $order->status;
+        $note = null;
 
         try {
-            DB::transaction(function () use ($order, $data) {
+            DB::transaction(function () use ($order, $data, &$note) {
                 $old = $order->status;
 
                 if ($data['status'] === 'cancelled') {
@@ -126,7 +127,7 @@ class AdminOrderController extends Controller
                     }
                 }
 
-                //$note = $data['note'] ?: ('Admin đổi trạng thái: ' . auth()->user()->name);
+                $note = $data['note'] ?? ('Admin đổi trạng thái: ' . auth()->user()->name);
                 if ($data['status'] === 'processing' && empty($data['note'])) {
                     $note = 'Đã kiểm tra tồn kho và xác nhận đơn — ' . auth()->user()->name;
                 }
@@ -135,7 +136,7 @@ class AdminOrderController extends Controller
                     'order_id' => $order->id,
                     'old_status' => $old,
                     'new_status' => $data['status'],
-                    //'note' => $note,
+                    'note' => $note,
                 ]);
             });
         } catch (ValidationException $e) {
@@ -147,7 +148,7 @@ class AdminOrderController extends Controller
             $email = $order->shipping_email ?: $order->user?->email;
             if ($email) {
                 Mail::to($email)->send(
-                    new OrderStatusUpdatedMail($order, $oldStatus, $data['status'])
+                    new OrderStatusUpdatedMail($order, $oldStatus, $data['status'], $note)
                 );
             }
         } catch (\Throwable $e) {

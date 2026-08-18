@@ -17,6 +17,7 @@ class OrderStatusUpdatedMail extends Mailable
         public Order $order,
         public string $oldStatus,
         public string $newStatus,
+        public ?string $note = null,
     ) {
         $this->order->loadMissing(['user']);
     }
@@ -39,6 +40,7 @@ class OrderStatusUpdatedMail extends Mailable
                 'oldStatus' => $this->oldStatus,
                 'newStatus' => $this->newStatus,
                 'statusLabels' => Order::STATUS_LABELS,
+                'note' => $this->note,
             ],
         );
     }

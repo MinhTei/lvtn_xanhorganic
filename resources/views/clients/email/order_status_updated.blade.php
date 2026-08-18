@@ -11,6 +11,11 @@
         <strong>Trạng thái cũ:</strong> {{ $statusLabels[$oldStatus] ?? $oldStatus }}<br>
         <strong>Trạng thái mới:</strong> {{ $statusLabels[$newStatus] ?? $newStatus }}
     </p>
+    @if(!empty($note))
+    <p>
+        <strong>Lý do / Ghi chú:</strong> {{ $note }}
+    </p>
+    @endif
     <p>Tổng thanh toán: <strong>{{ number_format($order->total_amount, 0, ',', '.') }}₫</strong></p>
     <p style="color: #666; font-size: 13px;">Cảm ơn bạn đã mua sắm tại Xanh Organic.</p>
 </body>
