@@ -7,5 +7,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-//Hẹn giờ chạy lệnh falsh sale
-Schedule::command('products:update-flash-price')->daily();
+//Hẹn giờ chạy lệnh flash sale (Mỗi giờ 1 lần để cập nhật theo khung giờ)
+Schedule::command('products:update-flash-price')->hourly();
