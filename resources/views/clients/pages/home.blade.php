@@ -1,5 +1,5 @@
 @extends('layouts.client')
-@section('title', 'Trang chủ')
+@section('title', 'XanhOrganic')
 @section('content')
     <section class="hero">
         <div class="container">
