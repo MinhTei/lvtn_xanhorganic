@@ -8,4 +8,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 //Hẹn giờ chạy lệnh flash sale (Mỗi giờ 1 lần để cập nhật theo khung giờ)
-Schedule::command('products:update-flash-price')->hourly();
+Schedule::command('products:update-flash-price')->hourly()->timezone('Asia/Ho_Chi_Minh');
