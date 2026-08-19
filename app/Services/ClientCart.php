@@ -29,11 +29,11 @@ class ClientCart
         $products = Product::with('images')->whereIn('id', $listProductId)->get()->keyBy('id');
         $resultCart = collect();
 
-        //Lặp session để xử lý
+        // session 
         foreach ($cartSession as $productId => $quantity) {
-            $product = $products->get($productId);//lấy chi tiết thông tin
+            $product = $products->get($productId);
             if ($product) {
-                //Đóng gói giống dữ liệu lấy từ data
+                //đóng gói giống dữ liệu lấy từ data
                 $fakeProduct = (object) [
                     'product_id' => $productId,
                     'quantity' => $quantity,
@@ -171,23 +171,14 @@ class ClientCart
             return [
                 'success' => false,
                 'message' => "Sản phẩm đã hết hàng.",
-                // 'errors'=>[
-                //     'quantity'=>["Sản phẩm này đã hết hàng!"]
-                // ],
-                'cart_count' => self::count()
             ];
         }
-        //Tổng cộng só lượng 
         $requestedTotal = $quantity + $inCart;
         //Kiểm tra nếu vượt
         if ($requestedTotal > $stock) {
             return [
                 'success' => false,
                 'message' => "chỉ còn {$stock} trong kho hiện tại bạn đang có {$inCart} trong giỏ. ",
-                // 'errors'=>[
-                //     'quantity'=>["Chỉ còn {$stock} trong kho. Bạn đang có {$inCart} trong giỏ."]
-                // ],
-                'cart_count' => self::count()
             ];
         }
 
@@ -211,9 +202,6 @@ class ClientCart
         return [
             'success' => true,
             'message' => 'Đã thêm giỏ hàng thành công!',
-            // 'errors'=>[
-            //     'quantity'=>['Đã thêm vào giỏ hàng']
-            // ],
             'cart_count' => self::count()
         ];
     }

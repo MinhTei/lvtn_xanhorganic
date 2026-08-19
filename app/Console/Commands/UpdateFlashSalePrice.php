@@ -10,14 +10,12 @@ use Illuminate\Console\Command;
 
 class UpdateFlashSalePrice extends Command
 {
-    //Tên lệnh để chạy trong terminal
     protected $signature = 'products:update-flash-price {--hour= : Giả lập giờ cụ thể để demo (0-23)}';  
-    //Mô tả hiển thị khi dùng lệnh php artisan list
     protected $description = 'Tự động giảm giá khi cận date và ẩn khi hết hạn';
 
     public function handle()
     {
-        // Lấy giờ hiện tại, hoặc giờ giả lập nếu có truyền --hour (dùng để demo)
+        // Lấy giờ hiện tại, hoặc giờ giả lập nếu có truyền --hour 
         $currentHour = $this->option('hour') !== null
             ? (int) $this->option('hour')
             : now()->hour;
@@ -26,10 +24,10 @@ class UpdateFlashSalePrice extends Command
             $this->info("[DEMO MODE] Đang giả lập giờ: {$currentHour}h00");
         }
 
-        // Xử lý sản phẩm Daily Cycle (thịt tươi, rau củ - reset theo giờ trong ngày)
+     
         $this->processDailyCycle($currentHour);
 
-        //tìm tất cả sản phẩm đang bán, có hạn sử dụng, và dùng chế độ tiêu chuẩn
+        //tìm tất cả sản phẩm đang bán
         $products = Product::whereNotNull('expiry_date')
             ->where('is_active', 1)
             ->where(function($q) {
@@ -38,7 +36,7 @@ class UpdateFlashSalePrice extends Command
             ->get();
         $count = 0;
         foreach($products as $product){
-            // Tính tròn ngày (bỏ qua khác biệt về giờ phút)
+            // Tính tròn ngày
             $dayLeft = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($product->expiry_date)->startOfDay(), false);
             
             // Tính tổng số ngày tuổi thọ của sản phẩm
@@ -73,7 +71,7 @@ class UpdateFlashSalePrice extends Command
                 $product->update(['sale_price'=>round($product->price*0.80)]);
                 $count++;
             }else {
-                // Hàng còn rất tươi ( > 50% tuổi thọ) -> Không giảm giá
+                //  > 50% 
                 if($product->sale_price != null) {
                     $product->update(['sale_price'=>null]);
                     $count++;
@@ -93,16 +91,16 @@ class UpdateFlashSalePrice extends Command
         $count = 0;
         foreach ($products as $product) {
             if ($currentHour >= 21) {
-                // 21:00 trở đi → Hết giờ giao hàng → Reset về giá gốc (chuẩn bị ngày mai)
+                // 21h
                 $product->update(['sale_price' => null]);
             } elseif ($currentHour >= 17) {
-                // 17:00 → 20:59 → Sắp hết giờ giao hàng: Giảm 40%
+                // 17h → 21h
                 $product->update(['sale_price' => round($product->price * 0.60)]);
             } elseif ($currentHour >= 14) {
-                // 14:00 → 16:59 → Xế chiều: Giảm 20%
+                // 14h → 17h
                 $product->update(['sale_price' => round($product->price * 0.80)]);
             } else {
-                // 00:00 → 13:59 → Hàng tươi buổi sáng: Giá gốc
+                // 0h → 14h
                 $product->update(['sale_price' => null]);
             }
             $count++;

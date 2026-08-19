@@ -167,7 +167,7 @@ class CheckoutController extends Controller
 
         [$shippingName, $shippingPhone, $shippingAddress] = $this->resolveShipping($request, $user);
 
-        // Email nhận xác nhận đơn: lấy từ form nếu địa chỉ mới, ngược lại dùng email tài khoản
+        //  địa chỉ mới, ngược lại dùng email tài khoản
         $shippingEmail = $request->address_type === 'new' ? $request->email : $user->email;
 
         $subtotal = 0;
@@ -230,7 +230,7 @@ class CheckoutController extends Controller
             $shippingEmail,
             $shippingAddress,
             $note,
-            $request
+            $request,
         ) {
             $order = Order::create([
                 'user_id' => $user->id,

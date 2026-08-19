@@ -19,11 +19,13 @@ class CouponService
             return ['success' => false, 'message' => 'Vui lòng nhập mã giảm giá.'];
         }
 
+        //kiểm tra tồn tại
         $coupon = Coupon::where('code', $code)->first();
         if (!$coupon) {
             return ['success' => false, 'message' => 'Mã giảm giá không tồn tại.'];
         }
 
+        //kiểm tra ngày áp dụng
         $today = Carbon::today();
         $start = Carbon::parse($coupon->start_date)->startOfDay();
         $end = Carbon::parse($coupon->end_date)->endOfDay();
@@ -31,26 +33,26 @@ class CouponService
         if ($today->lt($start) || $today->gt($end)) {
             return ['success' => false, 'message' => 'Mã giảm giá đã hết hạn hoặc chưa đến ngày áp dụng.'];
         }
-
+        //kiểm tra số tiền ít nhất
         if ($subtotal < (float) $coupon->min_order_value) {
             return [
                 'success' => false,
                 'message' => 'Đơn tối thiểu để dùng mã: ' . number_format($coupon->min_order_value, 0, ',', '.') . '₫',
             ];
         }
-
+        //coupon còn không
         if ($coupon->usage_limit !== null && $coupon->usages()->count() >= $coupon->usage_limit) {
             return ['success' => false, 'message' => 'Mã giảm giá đã hết lượt sử dụng trên hệ thống.'];
         }
 
-        // Mỗi user chỉ dùng giới hạn lượt (mặc định 1)
+        // user chỉ dùng giới hạn lần
         if ($userId) {
             $userUsages = CouponUsage::where('coupon_id', $coupon->id)->where('user_id', $userId)->count();
             if ($userUsages >= ($coupon->usage_limit_per_user ?? 1)) {
                 return ['success' => false, 'message' => 'Bạn đã hết lượt sử dụng mã này.'];
             }
         }
-
+        //tính tiền
         $discount = self::calcDiscount($coupon, $subtotal);
 
         return [
@@ -61,6 +63,7 @@ class CouponService
         ];
     }
 
+    // tính tiền được giảm
     public static function calcDiscount(Coupon $coupon, float $subtotal): float
     {
         if ($coupon->discount_type === 'percentage') {

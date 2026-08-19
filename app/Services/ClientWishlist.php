@@ -7,15 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Danh sách yêu thích
- *
- * QUY TẮC:
- * - Guest: SESSION key "wishlist" = [product_id, product_id, ...]
- * - User đã login: bảng "wishlists"
- * - Guest/User đều thêm/xem/xóa được — KHÔNG bắt login
- * - Khi login: gộp wishlist session vào DB
- */
+
 class ClientWishlist
 {
     public const SESSION_KEY = 'wishlist';
